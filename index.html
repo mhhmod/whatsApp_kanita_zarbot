@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,22 +12,27 @@
             box-sizing: border-box;
         }
 
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, 'Droid Arabic Naskh', sans-serif;
             background: #fff;
-            height: 100vh;
             display: flex;
+            overflow: hidden;
         }
 
         .container {
             display: flex;
             width: 100%;
-            height: 100vh;
+            height: 100%;
         }
 
         /* Sidebar */
         .sidebar {
-            width: 25%;
+            width: 28%;
             background: #fff;
             border-right: 1px solid #e5e5e5;
             display: flex;
@@ -46,12 +51,6 @@
             justify-content: space-between;
         }
 
-        .sidebar-header-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
         .contacts-list {
             flex: 1;
             overflow-y: auto;
@@ -59,10 +58,11 @@
         }
 
         .contact-item {
-            padding: 8px 8px;
+            padding: 8px;
             cursor: pointer;
             border-left: 4px solid transparent;
             transition: background 0.2s, border-color 0.2s;
+            border-bottom: 1px solid #f0f0f0;
         }
 
         .contact-item:hover {
@@ -75,12 +75,12 @@
         }
 
         .contact-preview {
-            padding: 8px 16px;
+            padding: 8px 12px;
         }
 
         .contact-name {
             font-weight: 500;
-            font-size: 14px;
+            font-size: 15px;
             color: #000;
             margin-bottom: 4px;
             white-space: nowrap;
@@ -89,9 +89,10 @@
         }
 
         .contact-phone {
-            font-size: 12px;
+            font-size: 13px;
             color: #999;
             margin-bottom: 4px;
+            direction: ltr;
         }
 
         .contact-last-message {
@@ -100,12 +101,14 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            direction: auto;
         }
 
         .contact-timestamp {
             font-size: 12px;
             color: #999;
             margin-top: 2px;
+            direction: ltr;
         }
 
         /* Chat Area */
@@ -127,12 +130,15 @@
 
         .chat-header-info h2 {
             font-size: 15px;
+            font-weight: 600;
             margin-bottom: 2px;
+            color: #000;
         }
 
         .chat-header-info p {
             font-size: 12px;
-            color: #666;
+            color: #999;
+            direction: ltr;
         }
 
         .messages-container {
@@ -142,12 +148,14 @@
             background: #fff;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         .message-group {
             display: flex;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
+            align-items: flex-end;
+            gap: 8px;
         }
 
         .message-group.sent {
@@ -159,34 +167,43 @@
         }
 
         .message-bubble {
-            max-width: 55%;
-            padding: 8px 12px;
-            border-radius: 7.5px;
+            max-width: 60%;
+            padding: 10px 13px;
+            border-radius: 18px;
             word-wrap: break-word;
-            font-size: 14px;
+            font-size: 15px;
             line-height: 1.4;
             position: relative;
+            overflow-wrap: break-word;
+            hyphens: auto;
         }
 
         .message-group.sent .message-bubble {
             background: #dcf8c6;
             color: #000;
+            border-bottom-right-radius: 4px;
         }
 
         .message-group.received .message-bubble {
             background: #e5e5e5;
             color: #000;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-content {
+            word-break: break-word;
+            direction: auto;
+            unicode-bidi: plaintext;
+            white-space: pre-wrap;
         }
 
         .message-time {
             font-size: 12px;
             color: #999;
             margin-top: 4px;
-            padding: 0 4px;
-        }
-
-        .message-content {
-            word-break: break-word;
+            padding: 0 6px;
+            direction: ltr;
+            white-space: nowrap;
         }
 
         /* Empty State */
@@ -238,27 +255,26 @@
         @media (max-width: 768px) {
             .sidebar {
                 width: 100%;
-                border-right: none;
-                border-bottom: 1px solid #e5e5e5;
-            }
-
-            .container {
-                flex-direction: column;
-            }
-
-            .chat-area {
+                position: absolute;
+                height: 100%;
+                z-index: 10;
                 display: none;
             }
 
-            .chat-area.active {
+            .sidebar.mobile-active {
                 display: flex;
+            }
+
+            .chat-area {
                 width: 100%;
-                height: 100%;
-                border-bottom: none;
             }
 
             .message-bubble {
-                max-width: 85%;
+                max-width: 80%;
+            }
+
+            .container {
+                position: relative;
             }
         }
 
@@ -283,22 +299,28 @@
         .messages-container::-webkit-scrollbar-thumb:hover {
             background: #999;
         }
+
+        a {
+            color: #0084ff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <!-- Sidebar -->
-        <div class="sidebar">
+        <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-header-title">
-                    <span>💬</span>
-                    <span>Chats</span>
-                </div>
+                <div>💬 Chats</div>
             </div>
             <ul class="contacts-list" id="contactsList">
                 <li style="padding: 16px; text-align: center; color: #999;">
                     <div class="spinner"></div>
-                    <p style="margin-top: 12px;">Loading conversations...</p>
+                    <p style="margin-top: 12px; font-size: 13px;">Loading conversations...</p>
                 </li>
             </ul>
         </div>
@@ -307,8 +329,8 @@
         <div class="chat-area" id="chatArea">
             <div class="empty-state">
                 <div>
-                    <h3>👋 Welcome to WhatsApp Conversations</h3>
-                    <p>Select a contact from the left to view messages</p>
+                    <h3>👋 Welcome</h3>
+                    <p>Select a contact to view messages</p>
                 </div>
             </div>
         </div>
@@ -335,6 +357,7 @@
         // ==========================================
         const contactsList = document.getElementById('contactsList');
         const chatArea = document.getElementById('chatArea');
+        const sidebar = document.getElementById('sidebar');
 
         // ==========================================
         // Fetch All Messages
@@ -358,11 +381,8 @@
                 allMessages = data || [];
                 console.log(`Loaded ${allMessages.length} messages`);
 
-                // Extract unique contacts
                 extractContacts();
                 renderContactsList();
-
-                // Enable real-time updates after initial load
                 subscribeToRealtimeUpdates();
 
             } catch (error) {
@@ -408,7 +428,7 @@
 
             if (contacts.length === 0) {
                 contactsList.innerHTML = `
-                    <li style="padding: 16px; text-align: center; color: #999;">
+                    <li style="padding: 16px; text-align: center; color: #999; font-size: 13px;">
                         <p>No conversations yet</p>
                     </li>
                 `;
@@ -419,7 +439,7 @@
                 const li = document.createElement('li');
                 li.className = 'contact-item';
                 
-                const lastMsgPreview = truncateText(contact.lastMessage, 40);
+                const lastMsgPreview = truncateText(contact.lastMessage, 45);
                 const timeStr = formatTimeShort(contact.lastMessageTime);
 
                 li.innerHTML = `
@@ -431,7 +451,7 @@
                     </div>
                 `;
 
-                li.addEventListener('click', () => selectContact(contact));
+                li.addEventListener('click', () => selectContact(contact, li));
                 contactsList.appendChild(li);
             });
         }
@@ -439,16 +459,19 @@
         // ==========================================
         // Select Contact and Display Messages
         // ==========================================
-        function selectContact(contact) {
+        function selectContact(contact, element) {
             selectedContact = contact;
 
-            // Update sidebar selection
             document.querySelectorAll('.contact-item').forEach(item => {
                 item.classList.remove('active');
             });
-            event.currentTarget.classList.add('active');
+            element.classList.add('active');
 
-            // Render chat
+            // Close sidebar on mobile
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('mobile-active');
+            }
+
             renderChat();
         }
 
@@ -461,14 +484,13 @@
                     <div class="empty-state">
                         <div>
                             <h3>👋 Select a Contact</h3>
-                            <p>Choose a conversation from the left to get started</p>
+                            <p>Choose a conversation from the left</p>
                         </div>
                     </div>
                 `;
                 return;
             }
 
-            // Filter messages for selected contact
             const contactMessages = allMessages.filter(
                 msg => msg.contact_phone === selectedContact.phone
             );
@@ -485,7 +507,6 @@
                 return;
             }
 
-            // Build chat header and messages
             let chatHTML = `
                 <div class="chat-header">
                     <div class="chat-header-info">
@@ -499,12 +520,13 @@
             contactMessages.forEach(msg => {
                 const timeStr = formatTime(msg.created_at);
                 const messageType = msg.message_type === 'sent' ? 'sent' : 'received';
+                const messageBody = linkifyUrls(escapeHtml(msg.message_body));
                 
                 chatHTML += `
                     <div class="message-group ${messageType}">
                         <div>
                             <div class="message-bubble">
-                                <div class="message-content">${escapeHtml(msg.message_body)}</div>
+                                <div class="message-content">${messageBody}</div>
                             </div>
                             <div class="message-time">${timeStr}</div>
                         </div>
@@ -518,7 +540,6 @@
 
             chatArea.innerHTML = chatHTML;
 
-            // Scroll to bottom
             const messagesContainer = chatArea.querySelector('.messages-container');
             if (messagesContainer) {
                 setTimeout(() => {
@@ -560,8 +581,6 @@
                         }
                     )
                     .subscribe();
-
-                console.log('Real-time subscription enabled');
             } catch (error) {
                 console.error('Error setting up real-time subscription:', error);
             }
@@ -571,9 +590,19 @@
         // Utility Functions
         // ==========================================
         function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function linkifyUrls(text) {
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            return text.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
         }
 
         function truncateText(text, maxLength) {
@@ -615,25 +644,23 @@
         function showError(message) {
             console.error(message);
             contactsList.innerHTML = `
-                <li style="padding: 16px; text-align: center; color: #c41c3b;">
+                <li style="padding: 16px; text-align: center; color: #c41c3b; font-size: 13px;">
                     <p>❌ ${escapeHtml(message)}</p>
-                    <p style="font-size: 12px; margin-top: 8px;">Check console for details</p>
+                    <p style="margin-top: 8px;">Check console</p>
                 </li>
             `;
         }
 
         // ==========================================
-        // Initialize on Page Load
+        // Initialize
         // ==========================================
         window.addEventListener('DOMContentLoaded', () => {
             console.log('Page loaded, fetching messages...');
             fetchAllMessages();
         });
 
-        // Fallback for older browsers
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
-                console.log('Page loaded, fetching messages...');
                 fetchAllMessages();
             });
         } else {
