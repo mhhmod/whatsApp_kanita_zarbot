@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Business Conversations</title>
+    <title>WhatsApp Preview Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <style>
         * {
             margin: 0;
@@ -12,8 +13,8 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            background: #f0f2f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: #fff;
             height: 100vh;
             overflow: hidden;
         }
@@ -21,14 +22,13 @@
         .container {
             display: flex;
             height: 100vh;
-            background: #fff;
         }
 
-        /* SIDEBAR - CONTACTS LIST */
+        /* Sidebar Styles */
         .sidebar {
             width: 360px;
             background: #fff;
-            border-right: 1px solid #e5e5e5;
+            border-right: 1px solid #e5e5ea;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -36,44 +36,20 @@
 
         .sidebar-header {
             padding: 16px;
-            border-bottom: 1px solid #e5e5e5;
+            border-bottom: 1px solid #e5e5ea;
+            background: #f5f5f5;
         }
 
-        .sidebar-title {
+        .sidebar-header h1 {
             font-size: 32px;
             font-weight: 800;
             color: #000;
-            margin-bottom: 16px;
-        }
-
-        .search-box {
-            position: relative;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 10px 16px;
-            border: 1px solid #e5e5e5;
-            border-radius: 24px;
-            font-size: 15px;
-            background: #f0f2f5;
-            outline: none;
-            transition: all 0.3s ease;
-        }
-
-        .search-input:focus {
-            background: #fff;
-            border-color: #00a884;
-        }
-
-        .search-input::placeholder {
-            color: #999;
         }
 
         .contacts-list {
             flex: 1;
             overflow-y: auto;
-            overflow-x: hidden;
+            list-style: none;
         }
 
         .contact-item {
@@ -81,72 +57,48 @@
             margin: 0 8px;
             border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
+            transition: background-color 0.2s;
+            border: none;
+            width: calc(100% - 16px);
+            text-align: left;
+            background: transparent;
         }
 
         .contact-item:hover {
-            background-color: #f0f2f5;
+            background: #f0f0f0;
         }
 
         .contact-item.active {
-            background-color: #e7f3ff;
-            border-left: 4px solid #00a884;
+            background: #e7f3ff;
         }
 
-        .contact-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .contact-item-content {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 20px;
-            flex-shrink: 0;
-        }
-
-        .contact-info {
-            flex: 1;
-            min-width: 0;
+            flex-direction: column;
         }
 
         .contact-name {
             font-weight: 500;
             color: #000;
             font-size: 15px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         .contact-preview {
             font-size: 13px;
             color: #65676b;
+            margin-top: 4px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            margin-top: 4px;
         }
 
         .contact-time {
-            font-size: 13px;
+            font-size: 12px;
             color: #999;
-            flex-shrink: 0;
+            margin-top: 2px;
         }
 
-        .no-contacts {
-            padding: 40px 20px;
-            text-align: center;
-            color: #999;
-        }
-
-        /* CHAT AREA */
+        /* Chat Area Styles */
         .chat-area {
             flex: 1;
             display: flex;
@@ -155,79 +107,37 @@
         }
 
         .chat-header {
-            padding: 16px 24px;
-            border-bottom: 1px solid #e5e5e5;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e5ea;
+            background: #f5f5f5;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            background: #fff;
-        }
-
-        .chat-header-info {
-            display: flex;
             align-items: center;
-            gap: 12px;
         }
 
-        .chat-header-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        .chat-header-text h2 {
+        .chat-header h2 {
             font-size: 15px;
-            font-weight: 500;
+            font-weight: 600;
             color: #000;
-            margin: 0;
         }
 
-        .chat-header-text p {
-            font-size: 13px;
-            color: #65676b;
-            margin: 0;
-        }
-
-        .chat-empty {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #999;
-            font-size: 16px;
-            flex-direction: column;
-        }
-
-        .chat-empty-icon {
-            font-size: 64px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-
-        .messages {
+        .messages-container {
             flex: 1;
             overflow-y: auto;
-            padding: 16px 24px;
-            background: #fff;
+            padding: 16px;
             display: flex;
             flex-direction: column;
             gap: 8px;
+            background: #fff;
         }
 
         .message {
             display: flex;
-            margin-bottom: 8px;
-            animation: slideIn 0.3s ease;
+            margin-bottom: 4px;
+            animation: fadeIn 0.3s ease-in;
         }
 
-        @keyframes slideIn {
+        @keyframes fadeIn {
             from {
                 opacity: 0;
                 transform: translateY(10px);
@@ -256,8 +166,8 @@
         }
 
         .message.sent .message-bubble {
-            background: #00a884;
-            color: white;
+            background: #dcf8c6;
+            color: #000;
             border-bottom-right-radius: 4px;
         }
 
@@ -271,499 +181,353 @@
             font-size: 12px;
             color: #999;
             margin-top: 4px;
-            text-align: center;
-            width: 100%;
+            padding: 0 12px;
         }
 
-        .message-group {
+        .message.sent .message-time {
+            text-align: right;
+        }
+
+        .message.received .message-time {
+            text-align: left;
+        }
+
+        .empty-state {
             display: flex;
-            flex-direction: column;
-            gap: 2px;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            font-size: 16px;
+            text-align: center;
         }
 
-        /* SCROLLBAR */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #ccc;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #999;
-        }
-
-        /* LOADING STATE */
         .loading {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            height: 100%;
             color: #999;
+            font-size: 16px;
         }
 
-        .loading-dots {
-            display: inline-flex;
-            gap: 4px;
-        }
-
-        .loading-dot {
-            width: 8px;
-            height: 8px;
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #25d366;
             border-radius: 50%;
-            background: #00a884;
-            animation: bounce 1.4s infinite;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
         }
 
-        .loading-dot:nth-child(2) {
-            animation-delay: 0.2s;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        .loading-dot:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-
-        @keyframes bounce {
-            0%, 80%, 100% {
-                opacity: 0.3;
-                transform: scale(0.8);
-            }
-            40% {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .error-message {
-            padding: 20px;
-            background: #fee;
-            color: #c33;
-            border-radius: 8px;
-            margin: 16px;
-            font-size: 14px;
-        }
-
-        .success-message {
-            padding: 20px;
-            background: #efe;
-            color: #3c3;
-            border-radius: 8px;
-            margin: 16px;
-            font-size: 14px;
-        }
-
+        /* Responsive Design */
         @media (max-width: 768px) {
             .sidebar {
-                width: 280px;
+                width: 100%;
+                position: absolute;
+                height: 100%;
+                z-index: 10;
+                display: none;
+            }
+
+            .sidebar.active {
+                display: flex;
+            }
+
+            .chat-area {
+                width: 100%;
             }
 
             .message-bubble {
-                max-width: 70%;
+                max-width: 85%;
             }
 
-            .chat-header {
-                padding: 12px 16px;
+            .container {
+                flex-direction: column;
             }
+        }
 
-            .messages {
-                padding: 12px 16px;
-            }
+        /* Scrollbar Styling */
+        .contacts-list::-webkit-scrollbar,
+        .messages-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .contacts-list::-webkit-scrollbar-track,
+        .messages-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .contacts-list::-webkit-scrollbar-thumb,
+        .messages-container::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+
+        .contacts-list::-webkit-scrollbar-thumb:hover,
+        .messages-container::-webkit-scrollbar-thumb:hover {
+            background: #999;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- SIDEBAR -->
+        <!-- Sidebar -->
         <div class="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-title">Chats</div>
-                <div class="search-box">
-                    <input 
-                        type="text" 
-                        class="search-input" 
-                        id="searchInput" 
-                        placeholder="Search contacts..."
-                    >
-                </div>
+                <h1>Chats</h1>
             </div>
-            <div class="contacts-list" id="contactsList">
-                <div class="no-contacts">No contacts yet</div>
-            </div>
+            <ul class="contacts-list" id="contactsList"></ul>
         </div>
 
-        <!-- CHAT AREA -->
+        <!-- Chat Area -->
         <div class="chat-area">
-            <div id="chatContent" style="display: none; flex: 1; display: flex; flex-direction: column;">
-                <div class="chat-header">
-                    <div class="chat-header-info">
-                        <div class="chat-header-avatar" id="headerAvatar">A</div>
-                        <div class="chat-header-text">
-                            <h2 id="chatContactName">Contact Name</h2>
-                            <p id="chatContactPhone">Phone Number</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="messages" id="messagesContainer">
-                    <div class="loading">
-                        <span>Loading messages</span>
-                        <div class="loading-dots">
-                            <div class="loading-dot"></div>
-                            <div class="loading-dot"></div>
-                            <div class="loading-dot"></div>
-                        </div>
-                    </div>
-                </div>
+            <div class="chat-header">
+                <h2 id="chatHeaderName">Select a contact</h2>
             </div>
-
-            <div id="emptyState" style="display: flex;">
-                <div class="chat-empty">
-                    <div class="chat-empty-icon">💬</div>
-                    <p>Select a contact to view conversation</p>
-                </div>
+            <div class="messages-container" id="messagesContainer">
+                <div class="empty-state">Select a contact to view messages</div>
             </div>
         </div>
     </div>
 
     <script>
-        // ============================================
-        // CONFIGURATION - UPDATE WITH YOUR SUPABASE
-        // ============================================
+        // Supabase Configuration
         const SUPABASE_URL = 'https://lqrpeqhatnancvzqeduz.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxcnBlcWhhdG5hbmN2enFlZHV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjA1NTQsImV4cCI6MjA4MDQzNjU1NH0.EiCHK-0ha4-NAY9-EeTED_JPMcdTpqCvVJOx2kEZnBU';
 
-        // Your table structure should be:
-        // messages table: id, contact_phone, contact_name, message_body, message_type (text/sent/received), timestamp, created_at
-        // OR
-        // conversations table: contact_phone, contact_name, message, direction (sent/incoming), timestamp
+        // Initialize Supabase Client
+        const { createClient } = window.supabase;
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ============================================
-        // STATE MANAGEMENT
-        // ============================================
-        let allContacts = [];
-        let filteredContacts = [];
-        let selectedContact = null;
+        // State Management
         let allMessages = [];
+        let contacts = [];
+        let selectedContact = null;
 
-        // ============================================
-        // SUPABASE CLIENT
-        // ============================================
-        class SupabaseClient {
-            constructor(url, key) {
-                this.url = url;
-                this.key = key;
-            }
-
-            async request(method, path, body = null) {
-                const options = {
-                    method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${this.key}`,
-                        'apikey': this.key,
-                    },
-                };
-
-                if (body) {
-                    options.body = JSON.stringify(body);
-                }
-
-                const response = await fetch(`${this.url}/rest/v1${path}`, options);
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.message || 'API Error');
-                }
-
-                return data;
-            }
-
-            async select(table, query = '') {
-                return this.request('GET', `/${table}?${query}`);
-            }
-        }
-
-        const supabase = new SupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // ============================================
-        // UTILITY FUNCTIONS
-        // ============================================
-        function getInitials(name) {
-            return name
-                .split(' ')
-                .map(n => n[0])
-                .join('')
-                .toUpperCase()
-                .slice(0, 2);
-        }
-
-        function formatTime(timestamp) {
-            try {
-                const date = new Date(timestamp);
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                return `${hours}:${minutes}`;
-            } catch (e) {
-                return '';
-            }
-        }
-
-        function formatDate(timestamp) {
-            try {
-                const date = new Date(timestamp);
-                const today = new Date();
-                const yesterday = new Date(today);
-                yesterday.setDate(yesterday.getDate() - 1);
-
-                if (date.toDateString() === today.toDateString()) {
-                    return 'Today';
-                } else if (date.toDateString() === yesterday.toDateString()) {
-                    return 'Yesterday';
-                } else {
-                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                }
-            } catch (e) {
-                return '';
-            }
-        }
-
-        // ============================================
-        // FETCH DATA
-        // ============================================
-        /**
-         * Loads the list of contacts with their last message preview.
-         * This function assumes a PostgreSQL view or a more complex query is needed
-         * to efficiently get the *latest* message for each unique contact_phone.
-         * Since the custom SupabaseClient only supports simple REST queries, we'll
-         * use a slightly modified client-side grouping approach, but ideally, this
-         * should be done with a PostgreSQL function or a materialized view in Supabase.
-         */
-        async function loadContacts() {
-            try {
-                // Fetch all messages, ordered by created_at descending.
-                // We will process this list to find the latest message for each contact.
-                // For production, consider using a Supabase View/Function for efficiency.
-                const query = 'select=contact_phone,contact_name,message_body,created_at&order=created_at.desc&limit=5000';
-                const data = await supabase.select('messages', query);
-
-                // Group messages by contact, keeping only the first (latest) one encountered
-                const contactsMap = new Map();
-                
-                data.forEach(msg => {
-                    const phone = msg.contact_phone;
-                    if (!contactsMap.has(phone)) {
-                        contactsMap.set(phone, {
-                            phone: msg.contact_phone,
-                            name: msg.contact_name || `Contact ${phone}`,
-                            lastMessage: msg.message_body || 'No messages',
-                            lastMessageTime: msg.created_at,
-                        });
-                    }
-                });
-
-                // Convert map values to array. They are already sorted by lastMessageTime
-                // because we processed the pre-sorted list and only added the first occurrence.
-                allContacts = Array.from(contactsMap.values());
-
-                filteredContacts = [...allContacts];
-                renderContacts();
-                
-                if (allContacts.length === 0) {
-                    showError('No conversations found. Make sure your Supabase credentials are correct and the "messages" table is populated.');
-                }
-            } catch (error) {
-                console.error('Error loading contacts:', error);
-                showError(`Error loading contacts: ${error.message}`);
-            }
-        }
+        // DOM Elements
+        const contactsList = document.getElementById('contactsList');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const chatHeaderName = document.getElementById('chatHeaderName');
 
         /**
-         * Loads all historical messages for a specific contact.
-         * This ensures the complete history is loaded upon selecting a conversation.
+         * Fetch all messages from Supabase
          */
-
-        async function loadMessages(contactPhone) {
+        async function fetchMessages() {
             try {
-                const query = `select=*&contact_phone=eq.${encodeURIComponent(contactPhone)}&order=created_at.asc&limit=500`;
-                const data = await supabase.select('messages', query);
+                console.log('Fetching messages from Supabase...');
+                const { data, error } = await supabase
+                    .from('messages')
+                    .select('*')
+                    .order('contact_phone', { ascending: true })
+                    .order('created_at', { ascending: true });
+
+                if (error) {
+                    console.error('Error fetching messages:', error);
+                    showErrorMessage('Failed to load messages. Please refresh the page.');
+                    return;
+                }
+
                 allMessages = data || [];
-                renderMessages();
-            } catch (error) {
-                console.error('Error loading messages:', error);
-                showError(`Error loading messages: ${error.message}`);
-            }
-        }
+                console.log(`Loaded ${allMessages.length} messages`);
 
-        // ============================================
-        // RENDER FUNCTIONS
-        // ============================================
-        function renderContacts() {
-            const contactsList = document.getElementById('contactsList');
+                // Extract unique contacts
+                extractContacts();
 
-            if (filteredContacts.length === 0) {
-                contactsList.innerHTML = '<div class="no-contacts">No contacts found</div>';
-                return;
-            }
+                // Render contacts list
+                renderContactsList();
 
-            contactsList.innerHTML = filteredContacts.map(contact => `
-                <div class="contact-item ${selectedContact?.phone === contact.phone ? 'active' : ''}" 
-                     onclick="selectContact('${contact.phone}', '${contact.name.replace(/'/g, "\\'")}')">
-                    <div class="contact-avatar" style="background: linear-gradient(135deg, ${getRandomColor(contact.phone)} 0%, ${getRandomColor(contact.phone + '2')} 100%);">
-                        ${getInitials(contact.name)}
-                    </div>
-                    <div class="contact-info">
-                        <div class="contact-name">${escapeHtml(contact.name)}</div>
-                        <div class="contact-preview">${escapeHtml(contact.lastMessage)}</div>
-                    </div>
-                    <div class="contact-time">${formatDate(contact.lastMessageTime)}</div>
-                </div>
-            `).join('');
-        }
-
-        function renderMessages() {
-            const messagesContainer = document.getElementById('messagesContainer');
-            
-            if (allMessages.length === 0) {
-                messagesContainer.innerHTML = '<div class="loading"><span>No messages yet</span></div>';
-                return;
-            }
-
-            let currentDate = null;
-            let html = '';
-
-            allMessages.forEach((msg, index) => {
-                const msgDate = formatDate(msg.created_at);
-                const msgTime = formatTime(msg.created_at);
-                const isSent = msg.message_type === 'sent' || msg.direction === 'sent';
-
-                // Add date separator
-                if (msgDate !== currentDate) {
-                    currentDate = msgDate;
-                    html += `<div style="text-align: center; margin: 16px 0; font-size: 12px; color: #999;">${msgDate}</div>`;
+                // Select first contact if available
+                if (contacts.length > 0) {
+                    selectContact(contacts[0].phone);
                 }
+            } catch (error) {
+                console.error('Unexpected error:', error);
+                showErrorMessage('An unexpected error occurred. Please refresh the page.');
+            }
+        }
 
-                html += `
-                    <div class="message-group">
-                        <div class="message ${isSent ? 'sent' : 'received'}">
-                            <div class="message-bubble">${escapeHtml(msg.message_body || msg.message || '')}</div>
-                        </div>
-                        <div class="message-time">${msgTime}</div>
-                    </div>
-                `;
+        /**
+         * Extract unique contacts from messages
+         */
+        function extractContacts() {
+            const contactMap = new Map();
+
+            allMessages.forEach(message => {
+                if (!contactMap.has(message.contact_phone)) {
+                    contactMap.set(message.contact_phone, {
+                        phone: message.contact_phone,
+                        name: message.contact_name || message.contact_phone,
+                        lastMessage: message.message_body,
+                        lastMessageTime: message.created_at
+                    });
+                } else {
+                    const contact = contactMap.get(message.contact_phone);
+                    contact.lastMessage = message.message_body;
+                    contact.lastMessageTime = message.created_at;
+                }
             });
 
-            messagesContainer.innerHTML = html;
+            contacts = Array.from(contactMap.values());
+        }
+
+        /**
+         * Render contacts list in sidebar
+         */
+        function renderContactsList() {
+            contactsList.innerHTML = '';
+
+            if (contacts.length === 0) {
+                contactsList.innerHTML = '<li style="padding: 16px; text-align: center; color: #999;">No contacts found</li>';
+                return;
+            }
+
+            contacts.forEach(contact => {
+                const li = document.createElement('li');
+                const isActive = selectedContact && selectedContact.phone === contact.phone ? 'active' : '';
+                li.className = `contact-item ${isActive}`;
+                li.innerHTML = `
+                    <div class="contact-item-content">
+                        <div class="contact-name">${escapeHtml(contact.name)}</div>
+                        <div class="contact-preview">${escapeHtml(contact.lastMessage)}</div>
+                        <div class="contact-time">${formatTime(contact.lastMessageTime)}</div>
+                    </div>
+                `;
+                li.addEventListener('click', () => selectContact(contact.phone));
+                contactsList.appendChild(li);
+            });
+        }
+
+        /**
+         * Select a contact and display their messages
+         */
+        function selectContact(phoneNumber) {
+            selectedContact = contacts.find(c => c.phone === phoneNumber);
+            if (!selectedContact) return;
+
+            chatHeaderName.textContent = selectedContact.name;
+            renderMessages();
+            renderContactsList(); // Update active state
+        }
+
+        /**
+         * Render messages for selected contact
+         */
+        function renderMessages() {
+            messagesContainer.innerHTML = '';
+
+            if (!selectedContact) {
+                messagesContainer.innerHTML = '<div class="empty-state">Select a contact to view messages</div>';
+                return;
+            }
+
+            const contactMessages = allMessages.filter(
+                msg => msg.contact_phone === selectedContact.phone
+            );
+
+            if (contactMessages.length === 0) {
+                messagesContainer.innerHTML = '<div class="empty-state">No messages with this contact</div>';
+                return;
+            }
+
+            contactMessages.forEach(message => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${message.message_type}`;
+
+                const bubbleDiv = document.createElement('div');
+                bubbleDiv.className = 'message-bubble';
+                bubbleDiv.textContent = message.message_body;
+
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'message-time';
+                timeDiv.textContent = formatDateTime(message.created_at);
+
+                messageDiv.appendChild(bubbleDiv);
+                messageDiv.appendChild(timeDiv);
+                messagesContainer.appendChild(messageDiv);
+            });
+
+            // Scroll to bottom
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        // ============================================
-        // EVENT HANDLERS
-        // ============================================
-        function selectContact(phone, name) {
-            selectedContact = { phone, name };
-            
-            // Update UI
-            document.getElementById('emptyState').style.display = 'none';
-            document.getElementById('chatContent').style.display = 'flex';
-            document.getElementById('chatContactName').textContent = name;
-            document.getElementById('chatContactPhone').textContent = phone;
-            document.getElementById('headerAvatar').textContent = getInitials(name);
-            document.getElementById('headerAvatar').style.background = `linear-gradient(135deg, ${getRandomColor(phone)} 0%, ${getRandomColor(phone + '2')} 100%)`;
+        /**
+         * Format timestamp to time string (HH:MM)
+         */
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
 
-            // Render contacts to show active state
-            renderContacts();
+            if (diffMins < 1) return 'now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
 
-            // Load messages
-            loadMessages(phone);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
 
-        function searchContacts(query) {
-            const searchTerm = query.toLowerCase();
-            filteredContacts = allContacts.filter(contact =>
-                contact.name.toLowerCase().includes(searchTerm) ||
-                contact.phone.toLowerCase().includes(searchTerm)
-            );
-            renderContacts();
+        /**
+         * Format timestamp to full datetime string
+         */
+        function formatDateTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         }
 
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            searchContacts(e.target.value);
-        });
-
-        // ============================================
-        // UTILITY FUNCTIONS
-        // ============================================
+        /**
+         * Escape HTML to prevent XSS
+         */
         function escapeHtml(text) {
             if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
         }
 
-        function getRandomColor(seed) {
-            // Generate consistent color based on seed
-            let hash = 0;
-            for (let i = 0; i < seed.length; i++) {
-                hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            const hue = Math.abs(hash) % 360;
-            return `hsl(${hue}, 70%, 50%)`;
+        /**
+         * Show error message to user
+         */
+        function showErrorMessage(message) {
+            messagesContainer.innerHTML = `<div class="empty-state">${escapeHtml(message)}</div>`;
         }
 
-        function showError(message) {
-            console.error(message);
+        /**
+         * Initialize on page load
+         */
+        document.addEventListener('DOMContentLoaded', fetchMessages);
+
+        // Optional: Enable real-time subscriptions for live updates
+        function enableRealtimeUpdates() {
+            const subscription = supabase
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
+                    console.log('Real-time update received:', payload);
+                    // Refresh messages
+                    fetchMessages();
+                })
+                .subscribe();
+
+            return subscription;
         }
 
-        // ============================================
-        // AUTO-REFRESH MESSAGES
-        // ============================================
-        function setupAutoRefresh() {
-            setInterval(() => {
-                if (selectedContact) {
-                    loadMessages(selectedContact.phone);
-                }
-                loadContacts();
-            }, 5000); // Refresh every 5 seconds
-        }
-
-        // ============================================
-        // INITIALIZATION
-        // ============================================
-        async function init() {
-            if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
-                showError('⚠️ Please configure your Supabase credentials in the script (SUPABASE_URL and SUPABASE_ANON_KEY)');
-                document.getElementById('contactsList').innerHTML = `
-                    <div class="error-message">
-                        <strong>Configuration Required:</strong><br>
-                        1. Open this HTML file in an editor<br>
-                        2. Replace SUPABASE_URL with your Supabase project URL<br>
-                        3. Replace SUPABASE_ANON_KEY with your Supabase anon key<br>
-                        4. Make sure your messages table has: contact_phone, contact_name, message_body, message_type (sent/received), created_at
-                    </div>
-                `;
-                return;
-            }
-
-            // Load all historical contacts/conversations immediately on page load
-            await loadContacts();
-            
-            // If there are contacts, automatically select the most recent one
-            if (allContacts.length > 0) {
-                const firstContact = allContacts[0];
-                selectContact(firstContact.phone, firstContact.name);
-            }
-
-            // Setup auto-refresh for real-time updates (optional, but good for a chat app)
-            setupAutoRefresh();
-        }
-
-        // Start the app
-        init();
+        // Uncomment the line below to enable real-time updates
+        // enableRealtimeUpdates();
     </script>
 </body>
 </html>
