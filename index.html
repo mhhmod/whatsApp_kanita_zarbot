@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WhatsApp Conversation Preview</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -13,34 +12,27 @@
             box-sizing: border-box;
         }
 
-        html, body {
-            height: 100%;
-            width: 100%;
-        }
-
         body {
-            font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
             background: #fff;
+            height: 100vh;
             display: flex;
-            overflow: hidden;
-            direction: rtl;
         }
 
         .container {
             display: flex;
             width: 100%;
-            height: 100%;
+            height: 100vh;
         }
 
         /* Sidebar */
         .sidebar {
-            width: 28%;
+            width: 25%;
             background: #fff;
-            border-left: 1px solid #e5e5e5;
+            border-right: 1px solid #e5e5e5;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            order: 2;
         }
 
         .sidebar-header {
@@ -51,7 +43,12 @@
             font-size: 18px;
             display: flex;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: space-between;
+        }
+
+        .sidebar-header-title {
+            display: flex;
+            align-items: center;
             gap: 8px;
         }
 
@@ -62,11 +59,10 @@
         }
 
         .contact-item {
-            padding: 8px;
+            padding: 8px 8px;
             cursor: pointer;
-            border-right: 4px solid transparent;
+            border-left: 4px solid transparent;
             transition: background 0.2s, border-color 0.2s;
-            border-bottom: 1px solid #f0f0f0;
         }
 
         .contact-item:hover {
@@ -75,30 +71,27 @@
 
         .contact-item.active {
             background: #ede7e1;
-            border-right-color: #009688;
+            border-left-color: #009688;
         }
 
         .contact-preview {
-            padding: 8px 12px;
+            padding: 8px 16px;
         }
 
         .contact-name {
             font-weight: 500;
-            font-size: 15px;
+            font-size: 14px;
             color: #000;
             margin-bottom: 4px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            unicode-bidi: plaintext;
         }
 
         .contact-phone {
-            font-size: 13px;
+            font-size: 12px;
             color: #999;
             margin-bottom: 4px;
-            direction: ltr;
-            unicode-bidi: plaintext;
         }
 
         .contact-last-message {
@@ -107,15 +100,12 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            unicode-bidi: plaintext;
         }
 
         .contact-timestamp {
             font-size: 12px;
             color: #999;
             margin-top: 2px;
-            direction: ltr;
-            unicode-bidi: plaintext;
         }
 
         /* Chat Area */
@@ -124,7 +114,6 @@
             display: flex;
             flex-direction: column;
             background: #fff;
-            order: 1;
         }
 
         .chat-header {
@@ -138,17 +127,12 @@
 
         .chat-header-info h2 {
             font-size: 15px;
-            font-weight: 600;
             margin-bottom: 2px;
-            color: #000;
-            unicode-bidi: plaintext;
         }
 
         .chat-header-info p {
             font-size: 12px;
-            color: #999;
-            direction: ltr;
-            unicode-bidi: plaintext;
+            color: #666;
         }
 
         .messages-container {
@@ -161,73 +145,48 @@
             gap: 8px;
         }
 
-        .message-wrapper {
+        .message-group {
             display: flex;
-            margin-bottom: 2px;
-            animation: slideIn 0.3s ease-out;
+            margin-bottom: 8px;
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .message-wrapper.sent {
-            justify-content: flex-start;
-        }
-
-        .message-wrapper.received {
+        .message-group.sent {
             justify-content: flex-end;
         }
 
+        .message-group.received {
+            justify-content: flex-start;
+        }
+
         .message-bubble {
-            max-width: 60%;
-            padding: 10px 14px;
-            border-radius: 18px;
-            font-size: 15px;
-            line-height: 1.5;
+            max-width: 55%;
+            padding: 8px 12px;
+            border-radius: 7.5px;
             word-wrap: break-word;
-            overflow-wrap: break-word;
-            hyphens: auto;
-            unicode-bidi: plaintext;
-            direction: auto;
+            font-size: 14px;
+            line-height: 1.4;
+            position: relative;
         }
 
-        .message-wrapper.sent .message-bubble {
-            background: #e5e5e5;
-            color: #000;
-            border-bottom-left-radius: 4px;
-        }
-
-        .message-wrapper.received .message-bubble {
+        .message-group.sent .message-bubble {
             background: #dcf8c6;
             color: #000;
-            border-bottom-right-radius: 4px;
         }
 
-        .message-content {
-            word-break: break-word;
-            direction: auto;
-            unicode-bidi: plaintext;
-            white-space: pre-wrap;
-            display: inline-block;
-            text-align: right;
+        .message-group.received .message-bubble {
+            background: #e5e5e5;
+            color: #000;
         }
 
         .message-time {
             font-size: 12px;
             color: #999;
             margin-top: 4px;
-            padding: 0 6px;
-            direction: ltr;
-            unicode-bidi: plaintext;
-            white-space: nowrap;
+            padding: 0 4px;
+        }
+
+        .message-content {
+            word-break: break-word;
         }
 
         /* Empty State */
@@ -252,6 +211,15 @@
             color: #999;
         }
 
+        /* Loading State */
+        .loading {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+        }
+
         .spinner {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #009688;
@@ -266,7 +234,35 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Scrollbar */
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e5e5e5;
+            }
+
+            .container {
+                flex-direction: column;
+            }
+
+            .chat-area {
+                display: none;
+            }
+
+            .chat-area.active {
+                display: flex;
+                width: 100%;
+                height: 100%;
+                border-bottom: none;
+            }
+
+            .message-bubble {
+                max-width: 85%;
+            }
+        }
+
+        /* Scrollbar Styling */
         .contacts-list::-webkit-scrollbar,
         .messages-container::-webkit-scrollbar {
             width: 6px;
@@ -287,63 +283,34 @@
         .messages-container::-webkit-scrollbar-thumb:hover {
             background: #999;
         }
-
-        a {
-            color: #0084ff;
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                position: absolute;
-                height: 100%;
-                z-index: 10;
-                display: none;
-            }
-
-            .sidebar.mobile-active {
-                display: flex;
-            }
-
-            .chat-area {
-                width: 100%;
-            }
-
-            .message-bubble {
-                max-width: 80%;
-            }
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Chat Area (First) -->
-        <div class="chat-area" id="chatArea">
-            <div class="empty-state">
-                <div>
-                    <h3>👋 اختر محادثة</h3>
-                    <p>اختر جهة اتصال من اليسار لعرض الرسائل</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sidebar (Second) -->
-        <div class="sidebar" id="sidebar">
+        <!-- Sidebar -->
+        <div class="sidebar">
             <div class="sidebar-header">
-                <span>💬</span>
-                <span>المحادثات</span>
+                <div class="sidebar-header-title">
+                    <span>💬</span>
+                    <span>Chats</span>
+                </div>
             </div>
             <ul class="contacts-list" id="contactsList">
                 <li style="padding: 16px; text-align: center; color: #999;">
                     <div class="spinner"></div>
-                    <p style="margin-top: 12px; font-size: 13px;">جاري التحميل...</p>
+                    <p style="margin-top: 12px;">Loading conversations...</p>
                 </li>
             </ul>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-area" id="chatArea">
+            <div class="empty-state">
+                <div>
+                    <h3>👋 Welcome to WhatsApp Conversations</h3>
+                    <p>Select a contact from the left to view messages</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -368,7 +335,6 @@
         // ==========================================
         const contactsList = document.getElementById('contactsList');
         const chatArea = document.getElementById('chatArea');
-        const sidebar = document.getElementById('sidebar');
 
         // ==========================================
         // Fetch All Messages
@@ -392,8 +358,11 @@
                 allMessages = data || [];
                 console.log(`Loaded ${allMessages.length} messages`);
 
+                // Extract unique contacts
                 extractContacts();
                 renderContactsList();
+
+                // Enable real-time updates after initial load
                 subscribeToRealtimeUpdates();
 
             } catch (error) {
@@ -439,8 +408,8 @@
 
             if (contacts.length === 0) {
                 contactsList.innerHTML = `
-                    <li style="padding: 16px; text-align: center; color: #999; font-size: 13px;">
-                        <p>لا توجد محادثات بعد</p>
+                    <li style="padding: 16px; text-align: center; color: #999;">
+                        <p>No conversations yet</p>
                     </li>
                 `;
                 return;
@@ -450,7 +419,7 @@
                 const li = document.createElement('li');
                 li.className = 'contact-item';
                 
-                const lastMsgPreview = truncateText(contact.lastMessage, 45);
+                const lastMsgPreview = truncateText(contact.lastMessage, 40);
                 const timeStr = formatTimeShort(contact.lastMessageTime);
 
                 li.innerHTML = `
@@ -462,7 +431,7 @@
                     </div>
                 `;
 
-                li.addEventListener('click', () => selectContact(contact, li));
+                li.addEventListener('click', () => selectContact(contact));
                 contactsList.appendChild(li);
             });
         }
@@ -470,75 +439,72 @@
         // ==========================================
         // Select Contact and Display Messages
         // ==========================================
-        function selectContact(contact, element) {
+        function selectContact(contact) {
             selectedContact = contact;
 
+            // Update sidebar selection
             document.querySelectorAll('.contact-item').forEach(item => {
                 item.classList.remove('active');
             });
-            element.classList.add('active');
+            event.currentTarget.classList.add('active');
 
-            if (window.innerWidth <= 768) {
-                sidebar.classList.remove('mobile-active');
-            }
-
+            // Render chat
             renderChat();
         }
 
         // ==========================================
-        // Render Chat Messages (CHRONOLOGICAL ORDER)
+        // Render Chat Messages
         // ==========================================
         function renderChat() {
             if (!selectedContact) {
                 chatArea.innerHTML = `
                     <div class="empty-state">
                         <div>
-                            <h3>👋 اختر محادثة</h3>
-                            <p>اختر جهة اتصال لعرض الرسائل</p>
+                            <h3>👋 Select a Contact</h3>
+                            <p>Choose a conversation from the left to get started</p>
                         </div>
                     </div>
                 `;
                 return;
             }
 
-            // Filter and SORT by created_at (chronological order - oldest first)
-            const contactMessages = allMessages
-                .filter(msg => msg.contact_phone === selectedContact.phone)
-                .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            // Filter messages for selected contact
+            const contactMessages = allMessages.filter(
+                msg => msg.contact_phone === selectedContact.phone
+            );
 
             if (contactMessages.length === 0) {
                 chatArea.innerHTML = `
                     <div class="empty-state">
                         <div>
-                            <h3>لا توجد رسائل</h3>
-                            <p>ابدأ محادثة مع ${escapeHtml(selectedContact.name)}</p>
+                            <h3>No messages yet</h3>
+                            <p>Start a conversation with ${escapeHtml(selectedContact.name)}</p>
                         </div>
                     </div>
                 `;
                 return;
             }
 
+            // Build chat header and messages
             let chatHTML = `
                 <div class="chat-header">
                     <div class="chat-header-info">
                         <h2>${escapeHtml(selectedContact.name)}</h2>
-                        <p>${escapeHtml(selectedContact.phone)} · ${contactMessages.length} رسالة</p>
+                        <p>${escapeHtml(selectedContact.phone)} · ${contactMessages.length} messages</p>
                     </div>
                 </div>
                 <div class="messages-container">
             `;
 
-            // Render messages in order
             contactMessages.forEach(msg => {
                 const timeStr = formatTime(msg.created_at);
                 const messageType = msg.message_type === 'sent' ? 'sent' : 'received';
-                const messageBody = linkifyUrls(escapeHtml(msg.message_body));
                 
                 chatHTML += `
-                    <div class="message-wrapper ${messageType}">
+                    <div class="message-group ${messageType}">
                         <div>
                             <div class="message-bubble">
-                                <div class="message-content">${messageBody}</div>
+                                <div class="message-content">${escapeHtml(msg.message_body)}</div>
                             </div>
                             <div class="message-time">${timeStr}</div>
                         </div>
@@ -552,6 +518,7 @@
 
             chatArea.innerHTML = chatHTML;
 
+            // Scroll to bottom
             const messagesContainer = chatArea.querySelector('.messages-container');
             if (messagesContainer) {
                 setTimeout(() => {
@@ -593,6 +560,8 @@
                         }
                     )
                     .subscribe();
+
+                console.log('Real-time subscription enabled');
             } catch (error) {
                 console.error('Error setting up real-time subscription:', error);
             }
@@ -602,19 +571,9 @@
         // Utility Functions
         // ==========================================
         function escapeHtml(text) {
-            const map = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            };
-            return text.replace(/[&<>"']/g, m => map[m]);
-        }
-
-        function linkifyUrls(text) {
-            const urlRegex = /(https?:\/\/[^\s]+)/g;
-            return text.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         function truncateText(text, maxLength) {
@@ -629,12 +588,12 @@
             const diffHours = Math.floor(diffMs / 3600000);
             const diffDays = Math.floor(diffMs / 86400000);
 
-            if (diffMins < 1) return 'الآن';
-            if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
-            if (diffHours < 24) return date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-            if (diffDays === 1) return 'أمس';
-            if (diffDays < 7) return date.toLocaleDateString('ar-EG', { weekday: 'short' });
-            return date.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' });
+            if (diffMins < 1) return 'now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            if (diffDays === 1) return 'yesterday';
+            if (diffDays < 7) return date.toLocaleDateString('en-US', { weekday: 'short' });
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
 
         function formatTimeShort(timestamp) {
@@ -645,33 +604,36 @@
             const diffHours = Math.floor(diffMs / 3600000);
             const diffDays = Math.floor(diffMs / 86400000);
 
-            if (diffMins < 1) return 'الآن';
-            if (diffMins < 60) return `${diffMins}د`;
-            if (diffHours < 24) return date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-            if (diffDays === 1) return 'أمس';
-            if (diffDays < 7) return date.toLocaleDateString('ar-EG', { weekday: 'short' });
-            return date.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' });
+            if (diffMins < 1) return 'now';
+            if (diffMins < 60) return `${diffMins}m`;
+            if (diffHours < 24) return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            if (diffDays === 1) return 'yesterday';
+            if (diffDays < 7) return date.toLocaleDateString('en-US', { weekday: 'short' });
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
 
         function showError(message) {
             console.error(message);
             contactsList.innerHTML = `
-                <li style="padding: 16px; text-align: center; color: #c41c3b; font-size: 13px;">
+                <li style="padding: 16px; text-align: center; color: #c41c3b;">
                     <p>❌ ${escapeHtml(message)}</p>
+                    <p style="font-size: 12px; margin-top: 8px;">Check console for details</p>
                 </li>
             `;
         }
 
         // ==========================================
-        // Initialize
+        // Initialize on Page Load
         // ==========================================
         window.addEventListener('DOMContentLoaded', () => {
             console.log('Page loaded, fetching messages...');
             fetchAllMessages();
         });
 
+        // Fallback for older browsers
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
+                console.log('Page loaded, fetching messages...');
                 fetchAllMessages();
             });
         } else {
