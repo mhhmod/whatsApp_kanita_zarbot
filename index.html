@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Conversation Preview</title>
+    <title>محادثات واتس آب</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -19,11 +20,14 @@
         }
 
         body {
-            font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            font-family: 'Tajawal', 'Cairo', -apple-system, sans-serif;
             background: #fff;
             display: flex;
             overflow: hidden;
             direction: rtl;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         .container {
@@ -40,19 +44,18 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            order: 2;
         }
 
         .sidebar-header {
             padding: 16px;
             background: #009688;
             color: white;
-            font-weight: 600;
+            font-weight: 700;
             font-size: 18px;
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            gap: 8px;
+            gap: 10px;
         }
 
         .contacts-list {
@@ -83,14 +86,13 @@
         }
 
         .contact-name {
-            font-weight: 500;
+            font-weight: 700;
             font-size: 15px;
             color: #000;
             margin-bottom: 4px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            unicode-bidi: plaintext;
         }
 
         .contact-phone {
@@ -98,7 +100,8 @@
             color: #999;
             margin-bottom: 4px;
             direction: ltr;
-            unicode-bidi: plaintext;
+            unicode-bidi: bidi-override;
+            text-align: left;
         }
 
         .contact-last-message {
@@ -107,7 +110,6 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            unicode-bidi: plaintext;
         }
 
         .contact-timestamp {
@@ -115,7 +117,8 @@
             color: #999;
             margin-top: 2px;
             direction: ltr;
-            unicode-bidi: plaintext;
+            unicode-bidi: bidi-override;
+            text-align: left;
         }
 
         /* Chat Area */
@@ -124,7 +127,6 @@
             display: flex;
             flex-direction: column;
             background: #fff;
-            order: 1;
         }
 
         .chat-header {
@@ -138,17 +140,14 @@
 
         .chat-header-info h2 {
             font-size: 15px;
-            font-weight: 600;
+            font-weight: 700;
             margin-bottom: 2px;
             color: #000;
-            unicode-bidi: plaintext;
         }
 
         .chat-header-info p {
             font-size: 12px;
             color: #999;
-            direction: ltr;
-            unicode-bidi: plaintext;
         }
 
         .messages-container {
@@ -159,75 +158,75 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+            word-wrap: break-word;
         }
 
-        .message-wrapper {
+        .message-row {
             display: flex;
-            margin-bottom: 2px;
-            animation: slideIn 0.3s ease-out;
+            align-items: flex-end;
+            margin-bottom: 4px;
+            gap: 8px;
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .message-wrapper.sent {
+        .message-row.sent {
             justify-content: flex-start;
+            flex-direction: row-reverse;
         }
 
-        .message-wrapper.received {
+        .message-row.received {
             justify-content: flex-end;
         }
 
+        .bubble-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .message-row.sent .bubble-wrapper {
+            align-items: flex-start;
+        }
+
+        .message-row.received .bubble-wrapper {
+            align-items: flex-end;
+        }
+
         .message-bubble {
-            max-width: 60%;
+            max-width: 55%;
             padding: 10px 14px;
             border-radius: 18px;
             font-size: 15px;
-            line-height: 1.5;
+            line-height: 1.6;
             word-wrap: break-word;
             overflow-wrap: break-word;
-            hyphens: auto;
-            unicode-bidi: plaintext;
-            direction: auto;
         }
 
-        .message-wrapper.sent .message-bubble {
+        .message-row.sent .message-bubble {
             background: #e5e5e5;
             color: #000;
             border-bottom-left-radius: 4px;
         }
 
-        .message-wrapper.received .message-bubble {
+        .message-row.received .message-bubble {
             background: #dcf8c6;
             color: #000;
             border-bottom-right-radius: 4px;
         }
 
-        .message-content {
+        .message-text {
             word-break: break-word;
-            direction: auto;
-            unicode-bidi: plaintext;
-            white-space: pre-wrap;
-            display: inline-block;
+            line-height: 1.6;
+            display: block;
             text-align: right;
         }
 
         .message-time {
             font-size: 12px;
             color: #999;
-            margin-top: 4px;
-            padding: 0 6px;
             direction: ltr;
-            unicode-bidi: plaintext;
-            white-space: nowrap;
+            unicode-bidi: bidi-override;
+            text-align: left;
+            padding: 0 4px;
         }
 
         /* Empty State */
@@ -296,33 +295,11 @@
         a:hover {
             text-decoration: underline;
         }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                position: absolute;
-                height: 100%;
-                z-index: 10;
-                display: none;
-            }
-
-            .sidebar.mobile-active {
-                display: flex;
-            }
-
-            .chat-area {
-                width: 100%;
-            }
-
-            .message-bubble {
-                max-width: 80%;
-            }
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Chat Area (First) -->
+        <!-- Chat Area -->
         <div class="chat-area" id="chatArea">
             <div class="empty-state">
                 <div>
@@ -332,7 +309,7 @@
             </div>
         </div>
 
-        <!-- Sidebar (Second) -->
+        <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <span>💬</span>
@@ -348,34 +325,21 @@
     </div>
 
     <script>
-        // ==========================================
-        // Supabase Configuration
-        // ==========================================
         const SUPABASE_URL = 'https://lqrpeqhatnancvzqeduz.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxcnBlcWhhdG5hbmN2enFlZHV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjA1NTQsImV4cCI6MjA4MDQzNjU1NH0.EiCHK-0ha4-NAY9-EeTED_JPMcdTpqCvVJOx2kEZnBU';
 
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ==========================================
-        // State Management
-        // ==========================================
         let allMessages = [];
         let contacts = [];
         let selectedContact = null;
 
-        // ==========================================
-        // DOM Elements
-        // ==========================================
         const contactsList = document.getElementById('contactsList');
         const chatArea = document.getElementById('chatArea');
-        const sidebar = document.getElementById('sidebar');
 
-        // ==========================================
-        // Fetch All Messages
-        // ==========================================
         async function fetchAllMessages() {
             try {
-                console.log('Fetching messages from Supabase...');
+                console.log('Fetching messages...');
                 
                 const { data, error } = await supabase
                     .from('messages')
@@ -384,8 +348,8 @@
                     .order('created_at', { ascending: true });
 
                 if (error) {
-                    console.error('Supabase fetch error:', error);
-                    showError('Failed to load messages: ' + error.message);
+                    console.error('Error:', error);
+                    showError('فشل تحميل الرسائل: ' + error.message);
                     return;
                 }
 
@@ -397,14 +361,11 @@
                 subscribeToRealtimeUpdates();
 
             } catch (error) {
-                console.error('Error fetching messages:', error);
-                showError('An error occurred while loading messages');
+                console.error('Error:', error);
+                showError('حدث خطأ ما');
             }
         }
 
-        // ==========================================
-        // Extract Unique Contacts
-        // ==========================================
         function extractContacts() {
             const contactMap = new Map();
 
@@ -428,21 +389,13 @@
             });
 
             contacts = Array.from(contactMap.values());
-            console.log(`Extracted ${contacts.length} unique contacts`);
         }
 
-        // ==========================================
-        // Render Contacts List
-        // ==========================================
         function renderContactsList() {
             contactsList.innerHTML = '';
 
             if (contacts.length === 0) {
-                contactsList.innerHTML = `
-                    <li style="padding: 16px; text-align: center; color: #999; font-size: 13px;">
-                        <p>لا توجد محادثات بعد</p>
-                    </li>
-                `;
+                contactsList.innerHTML = '<li style="padding: 16px; text-align: center; color: #999;"><p>لا توجد محادثات</p></li>';
                 return;
             }
 
@@ -467,9 +420,6 @@
             });
         }
 
-        // ==========================================
-        // Select Contact and Display Messages
-        // ==========================================
         function selectContact(contact, element) {
             selectedContact = contact;
 
@@ -478,16 +428,9 @@
             });
             element.classList.add('active');
 
-            if (window.innerWidth <= 768) {
-                sidebar.classList.remove('mobile-active');
-            }
-
             renderChat();
         }
 
-        // ==========================================
-        // Render Chat Messages (CHRONOLOGICAL ORDER)
-        // ==========================================
         function renderChat() {
             if (!selectedContact) {
                 chatArea.innerHTML = `
@@ -501,7 +444,7 @@
                 return;
             }
 
-            // Filter and SORT by created_at (chronological order - oldest first)
+            // CRITICAL: Sort by created_at ascending (oldest first)
             const contactMessages = allMessages
                 .filter(msg => msg.contact_phone === selectedContact.phone)
                 .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
@@ -528,17 +471,16 @@
                 <div class="messages-container">
             `;
 
-            // Render messages in order
             contactMessages.forEach(msg => {
                 const timeStr = formatTime(msg.created_at);
                 const messageType = msg.message_type === 'sent' ? 'sent' : 'received';
                 const messageBody = linkifyUrls(escapeHtml(msg.message_body));
                 
                 chatHTML += `
-                    <div class="message-wrapper ${messageType}">
-                        <div>
+                    <div class="message-row ${messageType}">
+                        <div class="bubble-wrapper">
                             <div class="message-bubble">
-                                <div class="message-content">${messageBody}</div>
+                                <span class="message-text">${messageBody}</span>
                             </div>
                             <div class="message-time">${timeStr}</div>
                         </div>
@@ -546,9 +488,7 @@
                 `;
             });
 
-            chatHTML += `
-                </div>
-            `;
+            chatHTML += `</div>`;
 
             chatArea.innerHTML = chatHTML;
 
@@ -560,61 +500,39 @@
             }
         }
 
-        // ==========================================
-        // Real-time Subscriptions
-        // ==========================================
         function subscribeToRealtimeUpdates() {
             try {
-                const channel = supabase
+                supabase
                     .channel('public:messages')
-                    .on(
-                        'postgres_changes',
-                        { event: '*', schema: 'public', table: 'messages' },
-                        (payload) => {
-                            console.log('Real-time update:', payload);
-                            
-                            if (payload.eventType === 'INSERT') {
-                                allMessages.push(payload.new);
-                            } else if (payload.eventType === 'UPDATE') {
-                                const index = allMessages.findIndex(m => m.id === payload.new.id);
-                                if (index !== -1) {
-                                    allMessages[index] = payload.new;
-                                }
-                            } else if (payload.eventType === 'DELETE') {
-                                allMessages = allMessages.filter(m => m.id !== payload.old.id);
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, (payload) => {
+                        if (payload.eventType === 'INSERT') {
+                            allMessages.push(payload.new);
+                        } else if (payload.eventType === 'UPDATE') {
+                            const index = allMessages.findIndex(m => m.id === payload.new.id);
+                            if (index !== -1) {
+                                allMessages[index] = payload.new;
                             }
-
-                            extractContacts();
-                            renderContactsList();
-                            
-                            if (selectedContact) {
-                                renderChat();
-                            }
+                        } else if (payload.eventType === 'DELETE') {
+                            allMessages = allMessages.filter(m => m.id !== payload.old.id);
                         }
-                    )
+
+                        extractContacts();
+                        renderContactsList();
+                        if (selectedContact) renderChat();
+                    })
                     .subscribe();
             } catch (error) {
-                console.error('Error setting up real-time subscription:', error);
+                console.error('Subscription error:', error);
             }
         }
 
-        // ==========================================
-        // Utility Functions
-        // ==========================================
         function escapeHtml(text) {
-            const map = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            };
-            return text.replace(/[&<>"']/g, m => map[m]);
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return String(text).replace(/[&<>"']/g, m => map[m]);
         }
 
         function linkifyUrls(text) {
-            const urlRegex = /(https?:\/\/[^\s]+)/g;
-            return text.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+            return text.replace(/(https?:\/\/[^\s]+)/g, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
         }
 
         function truncateText(text, maxLength) {
@@ -630,7 +548,7 @@
             const diffDays = Math.floor(diffMs / 86400000);
 
             if (diffMins < 1) return 'الآن';
-            if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
+            if (diffMins < 60) return `منذ ${diffMins}د`;
             if (diffHours < 24) return date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
             if (diffDays === 1) return 'أمس';
             if (diffDays < 7) return date.toLocaleDateString('ar-EG', { weekday: 'short' });
@@ -654,29 +572,11 @@
         }
 
         function showError(message) {
-            console.error(message);
-            contactsList.innerHTML = `
-                <li style="padding: 16px; text-align: center; color: #c41c3b; font-size: 13px;">
-                    <p>❌ ${escapeHtml(message)}</p>
-                </li>
-            `;
+            contactsList.innerHTML = `<li style="padding: 16px; text-align: center; color: #c41c3b; font-size: 13px;"><p>❌ ${escapeHtml(message)}</p></li>`;
         }
 
-        // ==========================================
-        // Initialize
-        // ==========================================
-        window.addEventListener('DOMContentLoaded', () => {
-            console.log('Page loaded, fetching messages...');
-            fetchAllMessages();
-        });
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                fetchAllMessages();
-            });
-        } else {
-            fetchAllMessages();
-        }
+        window.addEventListener('DOMContentLoaded', fetchAllMessages);
+        if (document.readyState !== 'loading') fetchAllMessages();
     </script>
 </body>
 </html>
