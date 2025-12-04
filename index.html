@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Preview Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <title>WhatsApp Conversation Preview</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4"></script>
     <style>
         * {
             margin: 0;
@@ -16,19 +16,20 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
             background: #fff;
             height: 100vh;
-            overflow: hidden;
+            display: flex;
         }
 
         .container {
             display: flex;
+            width: 100%;
             height: 100vh;
         }
 
-        /* Sidebar Styles */
+        /* Sidebar */
         .sidebar {
-            width: 360px;
+            width: 25%;
             background: #fff;
-            border-right: 1px solid #e5e5ea;
+            border-right: 1px solid #e5e5e5;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -36,14 +37,19 @@
 
         .sidebar-header {
             padding: 16px;
-            border-bottom: 1px solid #e5e5ea;
-            background: #f5f5f5;
+            background: #009688;
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        .sidebar-header h1 {
-            font-size: 32px;
-            font-weight: 800;
-            color: #000;
+        .sidebar-header-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .contacts-list {
@@ -54,51 +60,55 @@
 
         .contact-item {
             padding: 8px 8px;
-            margin: 0 8px;
-            border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.2s;
-            border: none;
-            width: calc(100% - 16px);
-            text-align: left;
-            background: transparent;
+            border-left: 4px solid transparent;
+            transition: background 0.2s, border-color 0.2s;
         }
 
         .contact-item:hover {
-            background: #f0f0f0;
+            background: #f5f5f5;
         }
 
         .contact-item.active {
-            background: #e7f3ff;
+            background: #ede7e1;
+            border-left-color: #009688;
         }
 
-        .contact-item-content {
-            display: flex;
-            flex-direction: column;
+        .contact-preview {
+            padding: 8px 16px;
         }
 
         .contact-name {
             font-weight: 500;
+            font-size: 14px;
             color: #000;
-            font-size: 15px;
-        }
-
-        .contact-preview {
-            font-size: 13px;
-            color: #65676b;
-            margin-top: 4px;
+            margin-bottom: 4px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .contact-time {
+        .contact-phone {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .contact-last-message {
+            font-size: 13px;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .contact-timestamp {
             font-size: 12px;
             color: #999;
             margin-top: 2px;
         }
 
-        /* Chat Area Styles */
+        /* Chat Area */
         .chat-area {
             flex: 1;
             display: flex;
@@ -108,117 +118,115 @@
 
         .chat-header {
             padding: 12px 16px;
-            border-bottom: 1px solid #e5e5ea;
-            background: #f5f5f5;
+            background: #f0f0f0;
+            border-bottom: 1px solid #e5e5e5;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .chat-header h2 {
+        .chat-header-info h2 {
             font-size: 15px;
-            font-weight: 600;
-            color: #000;
+            margin-bottom: 2px;
+        }
+
+        .chat-header-info p {
+            font-size: 12px;
+            color: #666;
         }
 
         .messages-container {
             flex: 1;
             overflow-y: auto;
             padding: 16px;
+            background: #fff;
             display: flex;
             flex-direction: column;
             gap: 8px;
-            background: #fff;
         }
 
-        .message {
+        .message-group {
             display: flex;
-            margin-bottom: 4px;
-            animation: fadeIn 0.3s ease-in;
+            margin-bottom: 8px;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .message.sent {
+        .message-group.sent {
             justify-content: flex-end;
         }
 
-        .message.received {
+        .message-group.received {
             justify-content: flex-start;
         }
 
         .message-bubble {
             max-width: 55%;
             padding: 8px 12px;
-            border-radius: 18px;
+            border-radius: 7.5px;
             word-wrap: break-word;
-            font-size: 15px;
+            font-size: 14px;
             line-height: 1.4;
+            position: relative;
         }
 
-        .message.sent .message-bubble {
+        .message-group.sent .message-bubble {
             background: #dcf8c6;
             color: #000;
-            border-bottom-right-radius: 4px;
         }
 
-        .message.received .message-bubble {
-            background: #e5e5ea;
+        .message-group.received .message-bubble {
+            background: #e5e5e5;
             color: #000;
-            border-bottom-left-radius: 4px;
         }
 
         .message-time {
             font-size: 12px;
             color: #999;
             margin-top: 4px;
-            padding: 0 12px;
+            padding: 0 4px;
         }
 
-        .message.sent .message-time {
-            text-align: right;
+        .message-content {
+            word-break: break-word;
         }
 
-        .message.received .message-time {
-            text-align: left;
-        }
-
+        /* Empty State */
         .empty-state {
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100%;
             color: #999;
-            font-size: 16px;
             text-align: center;
+            padding: 32px;
         }
 
+        .empty-state h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            color: #999;
+        }
+
+        /* Loading State */
         .loading {
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100%;
             color: #999;
-            font-size: 16px;
         }
 
         .spinner {
             border: 3px solid #f3f3f3;
-            border-top: 3px solid #25d366;
+            border-top: 3px solid #009688;
             border-radius: 50%;
             width: 40px;
             height: 40px;
             animation: spin 1s linear infinite;
-            margin-right: 12px;
         }
 
         @keyframes spin {
@@ -226,37 +234,38 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Responsive Design */
+        /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
                 width: 100%;
-                position: absolute;
-                height: 100%;
-                z-index: 10;
-                display: none;
-            }
-
-            .sidebar.active {
-                display: flex;
-            }
-
-            .chat-area {
-                width: 100%;
-            }
-
-            .message-bubble {
-                max-width: 85%;
+                border-right: none;
+                border-bottom: 1px solid #e5e5e5;
             }
 
             .container {
                 flex-direction: column;
+            }
+
+            .chat-area {
+                display: none;
+            }
+
+            .chat-area.active {
+                display: flex;
+                width: 100%;
+                height: 100%;
+                border-bottom: none;
+            }
+
+            .message-bubble {
+                max-width: 85%;
             }
         }
 
         /* Scrollbar Styling */
         .contacts-list::-webkit-scrollbar,
         .messages-container::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
         }
 
         .contacts-list::-webkit-scrollbar-track,
@@ -267,7 +276,7 @@
         .contacts-list::-webkit-scrollbar-thumb,
         .messages-container::-webkit-scrollbar-thumb {
             background: #ccc;
-            border-radius: 4px;
+            border-radius: 3px;
         }
 
         .contacts-list::-webkit-scrollbar-thumb:hover,
@@ -281,47 +290,59 @@
         <!-- Sidebar -->
         <div class="sidebar">
             <div class="sidebar-header">
-                <h1>Chats</h1>
+                <div class="sidebar-header-title">
+                    <span>💬</span>
+                    <span>Chats</span>
+                </div>
             </div>
-            <ul class="contacts-list" id="contactsList"></ul>
+            <ul class="contacts-list" id="contactsList">
+                <li style="padding: 16px; text-align: center; color: #999;">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 12px;">Loading conversations...</p>
+                </li>
+            </ul>
         </div>
 
         <!-- Chat Area -->
-        <div class="chat-area">
-            <div class="chat-header">
-                <h2 id="chatHeaderName">Select a contact</h2>
-            </div>
-            <div class="messages-container" id="messagesContainer">
-                <div class="empty-state">Select a contact to view messages</div>
+        <div class="chat-area" id="chatArea">
+            <div class="empty-state">
+                <div>
+                    <h3>👋 Welcome to WhatsApp Conversations</h3>
+                    <p>Select a contact from the left to view messages</p>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
+        // ==========================================
         // Supabase Configuration
+        // ==========================================
         const SUPABASE_URL = 'https://lqrpeqhatnancvzqeduz.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxcnBlcWhhdG5hbmN2enFlZHV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjA1NTQsImV4cCI6MjA4MDQzNjU1NH0.EiCHK-0ha4-NAY9-EeTED_JPMcdTpqCvVJOx2kEZnBU';
 
-        // Initialize Supabase Client
-        const { createClient } = window.supabase;
-        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // ==========================================
         // State Management
+        // ==========================================
         let allMessages = [];
         let contacts = [];
         let selectedContact = null;
 
+        // ==========================================
         // DOM Elements
+        // ==========================================
         const contactsList = document.getElementById('contactsList');
-        const messagesContainer = document.getElementById('messagesContainer');
-        const chatHeaderName = document.getElementById('chatHeaderName');
+        const chatArea = document.getElementById('chatArea');
 
-        /**
-         * Fetch all messages from Supabase
-         */
-        async function fetchMessages() {
+        // ==========================================
+        // Fetch All Messages
+        // ==========================================
+        async function fetchAllMessages() {
             try {
                 console.log('Fetching messages from Supabase...');
+                
                 const { data, error } = await supabase
                     .from('messages')
                     .select('*')
@@ -329,8 +350,8 @@
                     .order('created_at', { ascending: true });
 
                 if (error) {
-                    console.error('Error fetching messages:', error);
-                    showErrorMessage(\`Failed to load messages. Error: \${error.message || 'Unknown error'}.\\n\\nThis often means the table 'messages' does not exist or Row Level Security (RLS) is blocking access. Please ensure RLS is disabled or a SELECT policy is enabled for the 'anon' role.\`);
+                    console.error('Supabase fetch error:', error);
+                    showError('Failed to load messages: ' + error.message);
                     return;
                 }
 
@@ -339,129 +360,227 @@
 
                 // Extract unique contacts
                 extractContacts();
-
-                // Render contacts list
                 renderContactsList();
 
-                // Select first contact if available
-                if (contacts.length > 0) {
-                    selectContact(contacts[0].phone);
-                }
+                // Enable real-time updates after initial load
+                subscribeToRealtimeUpdates();
+
             } catch (error) {
-                console.error('Unexpected error:', error);
-                showErrorMessage('An unexpected error occurred. Please refresh the page.');
+                console.error('Error fetching messages:', error);
+                showError('An error occurred while loading messages');
             }
         }
 
-        /**
-         * Extract unique contacts from messages
-         */
+        // ==========================================
+        // Extract Unique Contacts
+        // ==========================================
         function extractContacts() {
             const contactMap = new Map();
 
-            allMessages.forEach(message => {
-                if (!contactMap.has(message.contact_phone)) {
-                    contactMap.set(message.contact_phone, {
-                        phone: message.contact_phone,
-                        name: message.contact_name || message.contact_phone,
-                        lastMessage: message.message_body,
-                        lastMessageTime: message.created_at
+            allMessages.forEach(msg => {
+                const key = msg.contact_phone;
+                
+                if (!contactMap.has(key)) {
+                    contactMap.set(key, {
+                        phone: msg.contact_phone,
+                        name: msg.contact_name || msg.contact_phone,
+                        lastMessage: msg.message_body,
+                        lastMessageTime: msg.created_at,
+                        messageCount: 0
                     });
-                } else {
-                    const contact = contactMap.get(message.contact_phone);
-                    contact.lastMessage = message.message_body;
-                    contact.lastMessageTime = message.created_at;
                 }
+
+                const contact = contactMap.get(key);
+                contact.messageCount++;
+                contact.lastMessage = msg.message_body;
+                contact.lastMessageTime = msg.created_at;
             });
 
             contacts = Array.from(contactMap.values());
+            console.log(`Extracted ${contacts.length} unique contacts`);
         }
 
-        /**
-         * Render contacts list in sidebar
-         */
+        // ==========================================
+        // Render Contacts List
+        // ==========================================
         function renderContactsList() {
             contactsList.innerHTML = '';
 
             if (contacts.length === 0) {
-                contactsList.innerHTML = '<li style="padding: 16px; text-align: center; color: #999;">No contacts found</li>';
+                contactsList.innerHTML = `
+                    <li style="padding: 16px; text-align: center; color: #999;">
+                        <p>No conversations yet</p>
+                    </li>
+                `;
                 return;
             }
 
             contacts.forEach(contact => {
                 const li = document.createElement('li');
-                const isActive = selectedContact && selectedContact.phone === contact.phone ? 'active' : '';
-                li.className = `contact-item ${isActive}`;
+                li.className = 'contact-item';
+                
+                const lastMsgPreview = truncateText(contact.lastMessage, 40);
+                const timeStr = formatTimeShort(contact.lastMessageTime);
+
                 li.innerHTML = `
-                    <div class="contact-item-content">
+                    <div class="contact-preview">
                         <div class="contact-name">${escapeHtml(contact.name)}</div>
-                        <div class="contact-preview">${escapeHtml(contact.lastMessage)}</div>
-                        <div class="contact-time">${formatTime(contact.lastMessageTime)}</div>
+                        <div class="contact-phone">${escapeHtml(contact.phone)}</div>
+                        <div class="contact-last-message">${escapeHtml(lastMsgPreview)}</div>
+                        <div class="contact-timestamp">${timeStr}</div>
                     </div>
                 `;
-                li.addEventListener('click', () => selectContact(contact.phone));
+
+                li.addEventListener('click', () => selectContact(contact));
                 contactsList.appendChild(li);
             });
         }
 
-        /**
-         * Select a contact and display their messages
-         */
-        function selectContact(phoneNumber) {
-            selectedContact = contacts.find(c => c.phone === phoneNumber);
-            if (!selectedContact) return;
+        // ==========================================
+        // Select Contact and Display Messages
+        // ==========================================
+        function selectContact(contact) {
+            selectedContact = contact;
 
-            chatHeaderName.textContent = selectedContact.name;
-            renderMessages();
-            renderContactsList(); // Update active state
+            // Update sidebar selection
+            document.querySelectorAll('.contact-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            // Render chat
+            renderChat();
         }
 
-        /**
-         * Render messages for selected contact
-         */
-        function renderMessages() {
-            messagesContainer.innerHTML = '';
-
+        // ==========================================
+        // Render Chat Messages
+        // ==========================================
+        function renderChat() {
             if (!selectedContact) {
-                messagesContainer.innerHTML = '<div class="empty-state">Select a contact to view messages</div>';
+                chatArea.innerHTML = `
+                    <div class="empty-state">
+                        <div>
+                            <h3>👋 Select a Contact</h3>
+                            <p>Choose a conversation from the left to get started</p>
+                        </div>
+                    </div>
+                `;
                 return;
             }
 
+            // Filter messages for selected contact
             const contactMessages = allMessages.filter(
                 msg => msg.contact_phone === selectedContact.phone
             );
 
             if (contactMessages.length === 0) {
-                messagesContainer.innerHTML = '<div class="empty-state">No messages with this contact</div>';
+                chatArea.innerHTML = `
+                    <div class="empty-state">
+                        <div>
+                            <h3>No messages yet</h3>
+                            <p>Start a conversation with ${escapeHtml(selectedContact.name)}</p>
+                        </div>
+                    </div>
+                `;
                 return;
             }
 
-            contactMessages.forEach(message => {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${message.message_type}`;
+            // Build chat header and messages
+            let chatHTML = `
+                <div class="chat-header">
+                    <div class="chat-header-info">
+                        <h2>${escapeHtml(selectedContact.name)}</h2>
+                        <p>${escapeHtml(selectedContact.phone)} · ${contactMessages.length} messages</p>
+                    </div>
+                </div>
+                <div class="messages-container">
+            `;
 
-                const bubbleDiv = document.createElement('div');
-                bubbleDiv.className = 'message-bubble';
-                bubbleDiv.textContent = message.message_body;
-
-                const timeDiv = document.createElement('div');
-                timeDiv.className = 'message-time';
-                timeDiv.textContent = formatDateTime(message.created_at);
-
-                messageDiv.appendChild(bubbleDiv);
-                messageDiv.appendChild(timeDiv);
-                messagesContainer.appendChild(messageDiv);
+            contactMessages.forEach(msg => {
+                const timeStr = formatTime(msg.created_at);
+                const messageType = msg.message_type === 'sent' ? 'sent' : 'received';
+                
+                chatHTML += `
+                    <div class="message-group ${messageType}">
+                        <div>
+                            <div class="message-bubble">
+                                <div class="message-content">${escapeHtml(msg.message_body)}</div>
+                            </div>
+                            <div class="message-time">${timeStr}</div>
+                        </div>
+                    </div>
+                `;
             });
 
+            chatHTML += `
+                </div>
+            `;
+
+            chatArea.innerHTML = chatHTML;
+
             // Scroll to bottom
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            const messagesContainer = chatArea.querySelector('.messages-container');
+            if (messagesContainer) {
+                setTimeout(() => {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }, 0);
+            }
         }
 
-        /**
-         * Format timestamp to time string (HH:MM)
-         */
+        // ==========================================
+        // Real-time Subscriptions
+        // ==========================================
+        function subscribeToRealtimeUpdates() {
+            try {
+                const channel = supabase
+                    .channel('public:messages')
+                    .on(
+                        'postgres_changes',
+                        { event: '*', schema: 'public', table: 'messages' },
+                        (payload) => {
+                            console.log('Real-time update:', payload);
+                            
+                            if (payload.eventType === 'INSERT') {
+                                allMessages.push(payload.new);
+                            } else if (payload.eventType === 'UPDATE') {
+                                const index = allMessages.findIndex(m => m.id === payload.new.id);
+                                if (index !== -1) {
+                                    allMessages[index] = payload.new;
+                                }
+                            } else if (payload.eventType === 'DELETE') {
+                                allMessages = allMessages.filter(m => m.id !== payload.old.id);
+                            }
+
+                            extractContacts();
+                            renderContactsList();
+                            
+                            if (selectedContact) {
+                                renderChat();
+                            }
+                        }
+                    )
+                    .subscribe();
+
+                console.log('Real-time subscription enabled');
+            } catch (error) {
+                console.error('Error setting up real-time subscription:', error);
+            }
+        }
+
+        // ==========================================
+        // Utility Functions
+        // ==========================================
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function truncateText(text, maxLength) {
+            return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+        }
+
         function formatTime(timestamp) {
-            if (!timestamp) return '';
             const date = new Date(timestamp);
             const now = new Date();
             const diffMs = now - date;
@@ -471,63 +590,55 @@
 
             if (diffMins < 1) return 'now';
             if (diffMins < 60) return `${diffMins}m ago`;
-            if (diffHours < 24) return `${diffHours}h ago`;
-            if (diffDays < 7) return `${diffDays}d ago`;
-
+            if (diffHours < 24) return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            if (diffDays === 1) return 'yesterday';
+            if (diffDays < 7) return date.toLocaleDateString('en-US', { weekday: 'short' });
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
 
-        /**
-         * Format timestamp to full datetime string
-         */
-        function formatDateTime(timestamp) {
-            if (!timestamp) return '';
+        function formatTimeShort(timestamp) {
             const date = new Date(timestamp);
-            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return 'now';
+            if (diffMins < 60) return `${diffMins}m`;
+            if (diffHours < 24) return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            if (diffDays === 1) return 'yesterday';
+            if (diffDays < 7) return date.toLocaleDateString('en-US', { weekday: 'short' });
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
 
-        /**
-         * Escape HTML to prevent XSS
-         */
-        function escapeHtml(text) {
-            if (!text) return '';
-            const map = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            };
-            return text.replace(/[&<>"']/g, m => map[m]);
+        function showError(message) {
+            console.error(message);
+            contactsList.innerHTML = `
+                <li style="padding: 16px; text-align: center; color: #c41c3b;">
+                    <p>❌ ${escapeHtml(message)}</p>
+                    <p style="font-size: 12px; margin-top: 8px;">Check console for details</p>
+                </li>
+            `;
         }
 
-        /**
-         * Show error message to user
-         */
-        function showErrorMessage(message) {
-            messagesContainer.innerHTML = `<div class="empty-state" style="white-space: pre-wrap; text-align: left; padding: 20px; color: #cc0000;">${escapeHtml(message)}</div>`;
+        // ==========================================
+        // Initialize on Page Load
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('Page loaded, fetching messages...');
+            fetchAllMessages();
+        });
+
+        // Fallback for older browsers
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('Page loaded, fetching messages...');
+                fetchAllMessages();
+            });
+        } else {
+            fetchAllMessages();
         }
-
-        /**
-         * Initialize on page load
-         */
-        document.addEventListener('DOMContentLoaded', fetchMessages);
-
-        // Optional: Enable real-time subscriptions for live updates
-        function enableRealtimeUpdates() {
-            const subscription = supabase
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
-                    console.log('Real-time update received:', payload);
-                    // Refresh messages
-                    fetchMessages();
-                })
-                .subscribe();
-
-            return subscription;
-        }
-
-        // Uncomment the line below to enable real-time updates
-        // enableRealtimeUpdates();
     </script>
 </body>
 </html>
