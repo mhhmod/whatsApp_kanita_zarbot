@@ -330,7 +330,7 @@
 
                 if (error) {
                     console.error('Error fetching messages:', error);
-                    showErrorMessage('Failed to load messages. Please refresh the page.');
+                    showErrorMessage(\`Failed to load messages. Error: \${error.message || 'Unknown error'}.\\n\\nThis often means the table 'messages' does not exist or Row Level Security (RLS) is blocking access. Please ensure RLS is disabled or a SELECT policy is enabled for the 'anon' role.\`);
                     return;
                 }
 
@@ -505,7 +505,7 @@
          * Show error message to user
          */
         function showErrorMessage(message) {
-            messagesContainer.innerHTML = `<div class="empty-state">${escapeHtml(message)}</div>`;
+            messagesContainer.innerHTML = `<div class="empty-state" style="white-space: pre-wrap; text-align: left; padding: 20px; color: #cc0000;">${escapeHtml(message)}</div>`;
         }
 
         /**
