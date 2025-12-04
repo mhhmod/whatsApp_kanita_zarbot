@@ -77,7 +77,7 @@
         }
 
         .contact-item {
-            padding: 12px;
+            padding: 8px 8px;
             margin: 0 8px;
             border-radius: 8px;
             cursor: pointer;
@@ -85,6 +85,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            padding: 12px;
         }
 
         .contact-item:hover {
@@ -357,13 +358,6 @@
             font-size: 14px;
         }
 
-        .refresh-indicator {
-            font-size: 12px;
-            color: #999;
-            padding: 8px 16px;
-            text-align: center;
-        }
-
         @media (max-width: 768px) {
             .sidebar {
                 width: 280px;
@@ -399,7 +393,7 @@
                 </div>
             </div>
             <div class="contacts-list" id="contactsList">
-                <div class="no-contacts">Loading contacts...</div>
+                <div class="no-contacts">No contacts yet</div>
             </div>
         </div>
 
@@ -425,7 +419,6 @@
                         </div>
                     </div>
                 </div>
-                <div class="refresh-indicator" id="refreshIndicator"></div>
             </div>
 
             <div id="emptyState" style="display: flex;">
@@ -444,6 +437,11 @@
         const SUPABASE_URL = 'https://lqrpeqhatnancvzqeduz.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxcnBlcWhhdG5hbmN2enFlZHV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjA1NTQsImV4cCI6MjA4MDQzNjU1NH0.EiCHK-0ha4-NAY9-EeTED_JPMcdTpqCvVJOx2kEZnBU';
 
+        // Your table structure should be:
+        // messages table: id, contact_phone, contact_name, message_body, message_type (text/sent/received), timestamp, created_at
+        // OR
+        // conversations table: contact_phone, contact_name, message, direction (sent/incoming), timestamp
+
         // ============================================
         // STATE MANAGEMENT
         // ============================================
@@ -451,7 +449,6 @@
         let filteredContacts = [];
         let selectedContact = null;
         let allMessages = [];
-        let lastRefreshTime = null;
 
         // ============================================
         // SUPABASE CLIENT
@@ -535,46 +532,30 @@
             }
         }
 
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function getRandomColor(seed) {
-            // Generate consistent color based on seed
-            let hash = 0;
-            for (let i = 0; i < seed.length; i++) {
-                hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            const hue = Math.abs(hash) % 360;
-            return `hsl(${hue}, 70%, 50%)`;
-        }
-
         // ============================================
-        // FETCH DATA - Load ALL messages from Supabase
+        // FETCH DATA
         // ============================================
-        async function loadAllMessages() {
+        /**
+         * Loads the list of contacts with their last message preview.
+         * This function assumes a PostgreSQL view or a more complex query is needed
+         * to efficiently get the *latest* message for each unique contact_phone.
+         * Since the custom SupabaseClient only supports simple REST queries, we'll
+         * use a slightly modified client-side grouping approach, but ideally, this
+         * should be done with a PostgreSQL function or a materialized view in Supabase.
+         */
+        async function loadContacts() {
             try {
-                // Load ALL messages from the table (no limit or high limit)
-                // Ordered by created_at descending to get newest first for grouping
-                const query = 'select=*&order=created_at.desc&limit=10000';
+                // Fetch all messages, ordered by created_at descending.
+                // We will process this list to find the latest message for each contact.
+                // For production, consider using a Supabase View/Function for efficiency.
+                const query = 'select=contact_phone,contact_name,message_body,created_at&order=created_at.desc&limit=5000';
                 const data = await supabase.select('messages', query);
 
-                if (!data || data.length === 0) {
-                    console.log('No messages found in Supabase');
-                    return [];
-                }
-
-                // Group messages by contact and get last message for each
+                // Group messages by contact, keeping only the first (latest) one encountered
                 const contactsMap = new Map();
-                const messagesMap = new Map(); // Store all messages by phone
-
+                
                 data.forEach(msg => {
                     const phone = msg.contact_phone;
-
-                    // Initialize contact if not exists
                     if (!contactsMap.has(phone)) {
                         contactsMap.set(phone, {
                             phone: msg.contact_phone,
@@ -583,36 +564,32 @@
                             lastMessageTime: msg.created_at,
                         });
                     }
-
-                    // Store all messages by phone for later retrieval
-                    if (!messagesMap.has(phone)) {
-                        messagesMap.set(phone, []);
-                    }
-                    messagesMap.get(phone).push(msg);
                 });
 
-                // Sort contacts by last message time
-                allContacts = Array.from(contactsMap.values()).sort((a, b) => 
-                    new Date(b.lastMessageTime) - new Date(a.lastMessageTime)
-                );
-
-                // Store messages map globally so we can access it per contact
-                window.messagesMap = messagesMap;
+                // Convert map values to array. They are already sorted by lastMessageTime
+                // because we processed the pre-sorted list and only added the first occurrence.
+                allContacts = Array.from(contactsMap.values());
 
                 filteredContacts = [...allContacts];
-                return data;
-
+                renderContacts();
+                
+                if (allContacts.length === 0) {
+                    showError('No conversations found. Make sure your Supabase credentials are correct and the "messages" table is populated.');
+                }
             } catch (error) {
-                console.error('Error loading all messages:', error);
-                showError(`Error loading messages: ${error.message}`);
-                return [];
+                console.error('Error loading contacts:', error);
+                showError(`Error loading contacts: ${error.message}`);
             }
         }
 
+        /**
+         * Loads all historical messages for a specific contact.
+         * This ensures the complete history is loaded upon selecting a conversation.
+         */
+
         async function loadMessages(contactPhone) {
             try {
-                // Load messages for specific contact, ordered by created_at ascending
-                const query = `select=*&contact_phone=eq.${encodeURIComponent(contactPhone)}&order=created_at.asc&limit=1000`;
+                const query = `select=*&contact_phone=eq.${encodeURIComponent(contactPhone)}&order=created_at.asc&limit=500`;
                 const data = await supabase.select('messages', query);
                 allMessages = data || [];
                 renderMessages();
@@ -641,7 +618,7 @@
                     </div>
                     <div class="contact-info">
                         <div class="contact-name">${escapeHtml(contact.name)}</div>
-                        <div class="contact-preview">${escapeHtml(contact.lastMessage.substring(0, 50))}</div>
+                        <div class="contact-preview">${escapeHtml(contact.lastMessage)}</div>
                     </div>
                     <div class="contact-time">${formatDate(contact.lastMessageTime)}</div>
                 </div>
@@ -659,7 +636,7 @@
             let currentDate = null;
             let html = '';
 
-            allMessages.forEach((msg) => {
+            allMessages.forEach((msg, index) => {
                 const msgDate = formatDate(msg.created_at);
                 const msgTime = formatTime(msg.created_at);
                 const isSent = msg.message_type === 'sent' || msg.direction === 'sent';
@@ -681,7 +658,6 @@
             });
 
             messagesContainer.innerHTML = html;
-            // Scroll to bottom to show latest messages
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
@@ -702,7 +678,7 @@
             // Render contacts to show active state
             renderContacts();
 
-            // Load messages for this contact
+            // Load messages
             loadMessages(phone);
         }
 
@@ -719,34 +695,44 @@
             searchContacts(e.target.value);
         });
 
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function getRandomColor(seed) {
+            // Generate consistent color based on seed
+            let hash = 0;
+            for (let i = 0; i < seed.length; i++) {
+                hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const hue = Math.abs(hash) % 360;
+            return `hsl(${hue}, 70%, 50%)`;
+        }
+
         function showError(message) {
             console.error(message);
         }
 
-        function updateRefreshIndicator() {
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            document.getElementById('refreshIndicator').textContent = `Last updated: ${timeStr}`;
-        }
-
         // ============================================
-        // AUTO-REFRESH - Check for new messages every 5 seconds
+        // AUTO-REFRESH MESSAGES
         // ============================================
         function setupAutoRefresh() {
-            setInterval(async () => {
+            setInterval(() => {
                 if (selectedContact) {
-                    // Refresh current conversation
-                    await loadMessages(selectedContact.phone);
+                    loadMessages(selectedContact.phone);
                 }
-                // Refresh contacts list
-                await loadAllMessages();
-                renderContacts();
-                updateRefreshIndicator();
+                loadContacts();
             }, 5000); // Refresh every 5 seconds
         }
 
         // ============================================
-        // INITIALIZATION - Load all data on page open
+        // INITIALIZATION
         // ============================================
         async function init() {
             if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
@@ -763,23 +749,21 @@
                 return;
             }
 
-            console.log('Loading all messages from Supabase...');
+            // Load all historical contacts/conversations immediately on page load
+            await loadContacts();
             
-            // Load ALL messages from Supabase on page open
-            await loadAllMessages();
-            renderContacts();
-            updateRefreshIndicator();
-
-            if (allContacts.length === 0) {
-                showError('No conversations found. Make sure your Supabase credentials are correct and you have messages in the table.');
+            // If there are contacts, automatically select the most recent one
+            if (allContacts.length > 0) {
+                const firstContact = allContacts[0];
+                selectContact(firstContact.phone, firstContact.name);
             }
 
-            // Setup auto-refresh to check for new messages
+            // Setup auto-refresh for real-time updates (optional, but good for a chat app)
             setupAutoRefresh();
         }
 
-        // Start the app when page loads
-        window.addEventListener('load', init);
+        // Start the app
+        init();
     </script>
 </body>
 </html>
