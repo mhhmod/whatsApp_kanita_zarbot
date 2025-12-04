@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WhatsApp Conversation Preview</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -18,10 +19,11 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, 'Droid Arabic Naskh', sans-serif;
+            font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
             background: #fff;
             display: flex;
             overflow: hidden;
+            direction: rtl;
         }
 
         .container {
@@ -34,10 +36,11 @@
         .sidebar {
             width: 28%;
             background: #fff;
-            border-right: 1px solid #e5e5e5;
+            border-left: 1px solid #e5e5e5;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            order: 2;
         }
 
         .sidebar-header {
@@ -48,7 +51,8 @@
             font-size: 18px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-start;
+            gap: 8px;
         }
 
         .contacts-list {
@@ -60,7 +64,7 @@
         .contact-item {
             padding: 8px;
             cursor: pointer;
-            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
             transition: background 0.2s, border-color 0.2s;
             border-bottom: 1px solid #f0f0f0;
         }
@@ -71,7 +75,7 @@
 
         .contact-item.active {
             background: #ede7e1;
-            border-left-color: #009688;
+            border-right-color: #009688;
         }
 
         .contact-preview {
@@ -86,6 +90,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            unicode-bidi: plaintext;
         }
 
         .contact-phone {
@@ -93,6 +98,7 @@
             color: #999;
             margin-bottom: 4px;
             direction: ltr;
+            unicode-bidi: plaintext;
         }
 
         .contact-last-message {
@@ -101,7 +107,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            direction: auto;
+            unicode-bidi: plaintext;
         }
 
         .contact-timestamp {
@@ -109,6 +115,7 @@
             color: #999;
             margin-top: 2px;
             direction: ltr;
+            unicode-bidi: plaintext;
         }
 
         /* Chat Area */
@@ -117,6 +124,7 @@
             display: flex;
             flex-direction: column;
             background: #fff;
+            order: 1;
         }
 
         .chat-header {
@@ -133,12 +141,14 @@
             font-weight: 600;
             margin-bottom: 2px;
             color: #000;
+            unicode-bidi: plaintext;
         }
 
         .chat-header-info p {
             font-size: 12px;
             color: #999;
             direction: ltr;
+            unicode-bidi: plaintext;
         }
 
         .messages-container {
@@ -148,46 +158,57 @@
             background: #fff;
             display: flex;
             flex-direction: column;
-            gap: 6px;
-        }
-
-        .message-group {
-            display: flex;
-            margin-bottom: 4px;
-            align-items: flex-end;
             gap: 8px;
         }
 
-        .message-group.sent {
-            justify-content: flex-end;
+        .message-wrapper {
+            display: flex;
+            margin-bottom: 2px;
+            animation: slideIn 0.3s ease-out;
         }
 
-        .message-group.received {
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-wrapper.sent {
             justify-content: flex-start;
+        }
+
+        .message-wrapper.received {
+            justify-content: flex-end;
         }
 
         .message-bubble {
             max-width: 60%;
-            padding: 10px 13px;
+            padding: 10px 14px;
             border-radius: 18px;
-            word-wrap: break-word;
             font-size: 15px;
-            line-height: 1.4;
-            position: relative;
+            line-height: 1.5;
+            word-wrap: break-word;
             overflow-wrap: break-word;
             hyphens: auto;
+            unicode-bidi: plaintext;
+            direction: auto;
         }
 
-        .message-group.sent .message-bubble {
-            background: #dcf8c6;
-            color: #000;
-            border-bottom-right-radius: 4px;
-        }
-
-        .message-group.received .message-bubble {
+        .message-wrapper.sent .message-bubble {
             background: #e5e5e5;
             color: #000;
             border-bottom-left-radius: 4px;
+        }
+
+        .message-wrapper.received .message-bubble {
+            background: #dcf8c6;
+            color: #000;
+            border-bottom-right-radius: 4px;
         }
 
         .message-content {
@@ -195,6 +216,8 @@
             direction: auto;
             unicode-bidi: plaintext;
             white-space: pre-wrap;
+            display: inline-block;
+            text-align: right;
         }
 
         .message-time {
@@ -203,6 +226,7 @@
             margin-top: 4px;
             padding: 0 6px;
             direction: ltr;
+            unicode-bidi: plaintext;
             white-space: nowrap;
         }
 
@@ -228,15 +252,6 @@
             color: #999;
         }
 
-        /* Loading State */
-        .loading {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #999;
-        }
-
         .spinner {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #009688;
@@ -251,34 +266,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                position: absolute;
-                height: 100%;
-                z-index: 10;
-                display: none;
-            }
-
-            .sidebar.mobile-active {
-                display: flex;
-            }
-
-            .chat-area {
-                width: 100%;
-            }
-
-            .message-bubble {
-                max-width: 80%;
-            }
-
-            .container {
-                position: relative;
-            }
-        }
-
-        /* Scrollbar Styling */
+        /* Scrollbar */
         .contacts-list::-webkit-scrollbar,
         .messages-container::-webkit-scrollbar {
             width: 6px;
@@ -308,31 +296,54 @@
         a:hover {
             text-decoration: underline;
         }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: absolute;
+                height: 100%;
+                z-index: 10;
+                display: none;
+            }
+
+            .sidebar.mobile-active {
+                display: flex;
+            }
+
+            .chat-area {
+                width: 100%;
+            }
+
+            .message-bubble {
+                max-width: 80%;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar -->
+        <!-- Chat Area (First) -->
+        <div class="chat-area" id="chatArea">
+            <div class="empty-state">
+                <div>
+                    <h3>👋 اختر محادثة</h3>
+                    <p>اختر جهة اتصال من اليسار لعرض الرسائل</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar (Second) -->
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div>💬 Chats</div>
+                <span>💬</span>
+                <span>المحادثات</span>
             </div>
             <ul class="contacts-list" id="contactsList">
                 <li style="padding: 16px; text-align: center; color: #999;">
                     <div class="spinner"></div>
-                    <p style="margin-top: 12px; font-size: 13px;">Loading conversations...</p>
+                    <p style="margin-top: 12px; font-size: 13px;">جاري التحميل...</p>
                 </li>
             </ul>
-        </div>
-
-        <!-- Chat Area -->
-        <div class="chat-area" id="chatArea">
-            <div class="empty-state">
-                <div>
-                    <h3>👋 Welcome</h3>
-                    <p>Select a contact to view messages</p>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -429,7 +440,7 @@
             if (contacts.length === 0) {
                 contactsList.innerHTML = `
                     <li style="padding: 16px; text-align: center; color: #999; font-size: 13px;">
-                        <p>No conversations yet</p>
+                        <p>لا توجد محادثات بعد</p>
                     </li>
                 `;
                 return;
@@ -467,7 +478,6 @@
             });
             element.classList.add('active');
 
-            // Close sidebar on mobile
             if (window.innerWidth <= 768) {
                 sidebar.classList.remove('mobile-active');
             }
@@ -476,31 +486,32 @@
         }
 
         // ==========================================
-        // Render Chat Messages
+        // Render Chat Messages (CHRONOLOGICAL ORDER)
         // ==========================================
         function renderChat() {
             if (!selectedContact) {
                 chatArea.innerHTML = `
                     <div class="empty-state">
                         <div>
-                            <h3>👋 Select a Contact</h3>
-                            <p>Choose a conversation from the left</p>
+                            <h3>👋 اختر محادثة</h3>
+                            <p>اختر جهة اتصال لعرض الرسائل</p>
                         </div>
                     </div>
                 `;
                 return;
             }
 
-            const contactMessages = allMessages.filter(
-                msg => msg.contact_phone === selectedContact.phone
-            );
+            // Filter and SORT by created_at (chronological order - oldest first)
+            const contactMessages = allMessages
+                .filter(msg => msg.contact_phone === selectedContact.phone)
+                .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
             if (contactMessages.length === 0) {
                 chatArea.innerHTML = `
                     <div class="empty-state">
                         <div>
-                            <h3>No messages yet</h3>
-                            <p>Start a conversation with ${escapeHtml(selectedContact.name)}</p>
+                            <h3>لا توجد رسائل</h3>
+                            <p>ابدأ محادثة مع ${escapeHtml(selectedContact.name)}</p>
                         </div>
                     </div>
                 `;
@@ -511,19 +522,20 @@
                 <div class="chat-header">
                     <div class="chat-header-info">
                         <h2>${escapeHtml(selectedContact.name)}</h2>
-                        <p>${escapeHtml(selectedContact.phone)} · ${contactMessages.length} messages</p>
+                        <p>${escapeHtml(selectedContact.phone)} · ${contactMessages.length} رسالة</p>
                     </div>
                 </div>
                 <div class="messages-container">
             `;
 
+            // Render messages in order
             contactMessages.forEach(msg => {
                 const timeStr = formatTime(msg.created_at);
                 const messageType = msg.message_type === 'sent' ? 'sent' : 'received';
                 const messageBody = linkifyUrls(escapeHtml(msg.message_body));
                 
                 chatHTML += `
-                    <div class="message-group ${messageType}">
+                    <div class="message-wrapper ${messageType}">
                         <div>
                             <div class="message-bubble">
                                 <div class="message-content">${messageBody}</div>
@@ -617,12 +629,12 @@
             const diffHours = Math.floor(diffMs / 3600000);
             const diffDays = Math.floor(diffMs / 86400000);
 
-            if (diffMins < 1) return 'now';
-            if (diffMins < 60) return `${diffMins}m ago`;
-            if (diffHours < 24) return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-            if (diffDays === 1) return 'yesterday';
-            if (diffDays < 7) return date.toLocaleDateString('en-US', { weekday: 'short' });
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            if (diffMins < 1) return 'الآن';
+            if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
+            if (diffHours < 24) return date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+            if (diffDays === 1) return 'أمس';
+            if (diffDays < 7) return date.toLocaleDateString('ar-EG', { weekday: 'short' });
+            return date.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' });
         }
 
         function formatTimeShort(timestamp) {
@@ -633,12 +645,12 @@
             const diffHours = Math.floor(diffMs / 3600000);
             const diffDays = Math.floor(diffMs / 86400000);
 
-            if (diffMins < 1) return 'now';
-            if (diffMins < 60) return `${diffMins}m`;
-            if (diffHours < 24) return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-            if (diffDays === 1) return 'yesterday';
-            if (diffDays < 7) return date.toLocaleDateString('en-US', { weekday: 'short' });
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            if (diffMins < 1) return 'الآن';
+            if (diffMins < 60) return `${diffMins}د`;
+            if (diffHours < 24) return date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+            if (diffDays === 1) return 'أمس';
+            if (diffDays < 7) return date.toLocaleDateString('ar-EG', { weekday: 'short' });
+            return date.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' });
         }
 
         function showError(message) {
@@ -646,7 +658,6 @@
             contactsList.innerHTML = `
                 <li style="padding: 16px; text-align: center; color: #c41c3b; font-size: 13px;">
                     <p>❌ ${escapeHtml(message)}</p>
-                    <p style="margin-top: 8px;">Check console</p>
                 </li>
             `;
         }
